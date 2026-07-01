@@ -1,0 +1,692 @@
+@font-face {
+  font-family: "VCDavid";
+  src: url("../assets/fonts/VC_david-Light.otf");
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: "VCDavid";
+  src: url("../assets/fonts/VC_david-Bold.otf");
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "SimplerMono";
+  src: url("../assets/fonts/SimplerPro_HLAR_Mono-Regular.0ef7f2360bcdad4ee6625f5d1430ac47.woff2") format("woff2");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "SimplerMono";
+  src: url("../assets/fonts/SimplerPro_HLAR_Mono-Medium.9441898803e1cfbe3081ec8473f5b09b.woff2") format("woff2");
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: "SimplerMono";
+  src: url("../assets/fonts/SimplerPro_HLAR_Mono-Bold.d2c9f5a00cb30075052bca15be4609d2.woff2") format("woff2");
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "TelAviv";
+  src: url("../assets/fonts/TelAviv-BrutalistRegular.ttf");
+  font-weight: 400;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+:root {
+  --color-white: #FAFAFA;
+  --bg: var(--color-white);
+  --grid-opacity: 0.45;
+  --grid-stroke: 0.5;
+
+  /* Album focus hover */
+  --album-focus-dim: 0.22;
+  --album-focus-transition: 0.28s ease;
+  --song-hover-nudge: 4px;
+  --side-label-underline: 200ms ease;
+}
+
+body {
+  --page-bg: var(--color-white);
+  --page-fg: #1C1C1C;
+  --grid-color: #9D9D9D;
+
+  --dot-bg: transparent;
+  --dot-border: #1C1C1C;
+  --dot-text: #1C1C1C;
+  --dot-hover-bg: #1C1C1C;
+  --dot-hover-border: #1C1C1C;
+  --dot-hover-text: var(--color-white);
+
+  background: var(--page-bg);
+  position: relative;
+  font-family: "SimplerMono", monospace;
+}
+
+.grid-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.grid-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.grid-svg line{
+  stroke:var(--grid-color);
+  stroke-width:0.5;
+  stroke-dasharray:4 4;
+}
+
+/* -------------------- */
+/* FOOTER STICKERS */
+/* -------------------- */
+
+.footer-sticker-left,
+.footer-sticker-right{
+position:fixed;
+z-index:10;
+}
+
+.footer-sticker-left{
+left: 33px;
+bottom:18px;
+}
+
+.footer-sticker-right{
+right:30px;
+bottom:18px;
+}
+
+.footer-sticker-left img{
+width:72px;
+height:auto;
+display:block;
+mix-blend-mode:multiply;
+}
+
+.footer-sticker-right img{
+width:92px;
+height:auto;
+display:block;
+}
+
+/* -------------------- */
+/* FOOTER CREDITS */
+/* -------------------- */
+
+.footer-credits{
+
+  position:fixed;
+  left:50%;
+  bottom:25px;
+  transform:translateX(-50%);
+  z-index:10;
+  font-family:"TelAviv";
+  font-size:10px;
+  line-height:1;
+  color:var(--page-fg);
+  white-space:nowrap;
+  text-align:center;
+  letter-spacing:0;
+}
+
+/* -------------------- */
+/* SHESHET TITLE */
+/* -------------------- */
+
+.album-title{
+  position:fixed;
+  inset:0;
+  z-index:20;
+  pointer-events:none;
+}
+
+.album-letter{
+  position:absolute;
+  cursor:pointer;
+  pointer-events:auto;
+}
+
+.album-letter img{
+  position:absolute;
+  inset:0;
+
+  width:100%;
+  height:100%;
+
+  display:block;
+}
+
+.album-letter .filled{
+  opacity:0;
+
+  transition:opacity .18s ease;
+}
+
+.album-letter:hover .filled{
+  opacity:1;
+}
+
+.album-letter.active .filled{
+  opacity:1;
+}
+
+/* ת */
+
+.taf-left{
+  width:53px;
+  height:60px;
+  left:36px;
+  top:20px;
+}
+
+/* ש אמצע */
+
+.shin-center{
+  width:66px;
+  height:60px;
+  left:50%;
+  transform:translateX(-50%);
+  top:20px;
+}
+
+.album-letter{
+  text-decoration:none;
+}
+
+/* ש ימין */
+
+.shin-right{
+  width:68px;
+  height:60px;
+  right:36px;
+  top:20px;
+}
+
+/* -------------------- */
+/* SONGS — shared styles (homepage only) */
+/* Per-track positioning: css/home-tracks.css */
+/* -------------------- */
+
+.songs-side-a,
+.songs-side-b{
+position:fixed;
+inset:0;
+z-index:15;
+pointer-events:none;
+}
+
+.side-tracklist{
+position:relative;
+width:100%;
+height:100%;
+}
+
+.song{
+position:absolute;
+pointer-events:auto;
+cursor:pointer;
+text-decoration:none;
+color:var(--page-fg);
+transition:
+  transform var(--album-focus-transition),
+  opacity var(--album-focus-transition);
+}
+
+.song:hover{
+z-index:2;
+}
+
+body.home-mode .songs-side-b .song:hover{
+transform:translateX(var(--song-hover-nudge));
+}
+
+body.home-mode .songs-side-a .song:hover{
+transform:translateX(calc(-1 * var(--song-hover-nudge)));
+}
+
+body.is-album-focus-a:not(.intro-active) .songs-side-b .song{
+opacity:var(--album-focus-dim);
+}
+
+body.is-album-focus-b:not(.intro-active) .songs-side-a .song{
+opacity:var(--album-focus-dim);
+}
+
+/* ---------- SIDE LABELS (home) ---------- */
+
+body.home-mode .side-label{
+z-index:14;
+pointer-events:none;
+font-family:"SimplerMono", monospace;
+font-weight:400;
+font-size:14px;
+line-height:1;
+color:var(--page-fg);
+white-space:nowrap;
+}
+
+body.home-mode .side-label::after{
+content:"";
+position:absolute;
+left:0;
+right:0;
+bottom:-6px;
+height:var(--side-label-underline-thickness, 1px);
+background:currentColor;
+opacity:0.85;
+transform:scaleX(0);
+transition:transform var(--side-label-underline);
+}
+
+body.home-mode .side-label-a::after{
+transform-origin:right center;
+}
+
+body.home-mode .side-label-b::after{
+transform-origin:left center;
+}
+
+body.home-mode.is-album-focus-a:not(.intro-active) .side-label-a::after{
+transform:scaleX(1);
+}
+
+body.home-mode.is-album-focus-b:not(.intro-active) .side-label-b::after{
+transform:scaleX(1);
+}
+
+body.intro-active .side-label,
+body.is-lyrics-exit .side-label{
+opacity:0;
+}
+
+/* -------------------- */
+/* HOME → LYRICS EXIT */
+/* -------------------- */
+
+body.is-lyrics-exit .song{
+pointer-events:none;
+}
+
+body.is-lyrics-exit .song .song-name,
+body.is-lyrics-exit .song .song-en,
+body.is-lyrics-exit .song .song-duration,
+body.is-lyrics-exit .song .song-credits{
+opacity:0 !important;
+transition:opacity 160ms ease;
+}
+
+body.is-lyrics-exit .is-instrumental{
+opacity:0;
+transition:opacity 260ms ease;
+}
+
+/* -------------------- */
+/* HOME ← LYRICS ENTER */
+/* -------------------- */
+
+html.home-intro .song .song-name,
+html.home-intro .song .song-duration{
+opacity:0;
+}
+
+html.home-intro .song .song-en,
+html.home-intro .song .song-credits{
+opacity:0;
+visibility:hidden;
+}
+
+html.home-intro .is-instrumental{
+opacity:0;
+visibility:hidden;
+}
+
+html.home-intro.home-reveal-all .song .song-name,
+html.home-intro.home-reveal-all .song .song-duration,
+html.home-intro.home-reveal-all .is-instrumental{
+opacity:1;
+visibility:visible;
+transition:
+  opacity 360ms ease,
+  visibility 360ms ease;
+}
+
+/* ---------- SONG TRACE COLORS — matches scribble system ---------- */
+
+.track-a1{
+--song-color:#D66926;
+}
+
+.track-a2{
+--song-color:#DFD538;
+}
+
+.track-a3{
+--song-color:#2E5E36;
+}
+
+.track-a4{
+--song-color:#18326B;
+}
+
+.track-a5{
+--song-color:#B42111;
+}
+
+.track-b1{
+--song-color:#18326B;
+}
+
+.track-b2{
+--song-color:#2E5E36;
+}
+
+.track-b3{
+--song-color:#DFD538;
+}
+
+.track-b4{
+--song-color:#D66926;
+}
+
+/* ---------- DOT — shared appearance; anchor set per track ---------- */
+
+.song-dot,
+.info-number{
+width:21px;
+height:21px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-family:"SimplerMono", monospace;
+font-size:13px;
+font-weight:500;
+line-height:1;
+box-sizing:border-box;
+flex-shrink:0;
+}
+
+.song-dot{
+position:absolute;
+background:var(--dot-bg);
+border:2px solid var(--dot-border);
+color:var(--dot-text);
+transition:
+  background .18s ease,
+  color .18s ease,
+  border-color .18s ease;
+}
+
+.song:hover .song-dot{
+background:var(--song-color);
+border-color:var(--song-color);
+color:var(--color-white);
+}
+
+.songs-side-b .song-dot{
+left:0;
+right:auto;
+transform:translate(-50%, -50%);
+}
+
+.songs-side-a .song-dot{
+right:0;
+left:auto;
+transform:translate(50%, -50%);
+}
+
+/* ---------- ENGLISH TITLE ---------- */
+
+.song-en{
+position:absolute;
+font-family:"SimplerMono", monospace;
+font-weight:400;
+font-size:14px;
+line-height:1;
+color:var(--page-fg);
+white-space:nowrap;
+opacity:0;
+visibility:hidden;
+pointer-events:none;
+transition:opacity .18s ease, visibility .18s ease;
+}
+
+.song-en::before{
+content:"[";
+}
+
+.song-en::after{
+content:"]";
+}
+
+/* ---------- HEBREW TITLE ---------- */
+
+.song-name{
+position:absolute;
+font-family:"VCDavid";
+font-weight:700;
+font-size:20pt;
+line-height:.9;
+color:var(--page-fg);
+white-space:nowrap;
+}
+
+.songs-side-b .song-name,
+.songs-side-b .song-duration{
+text-align:left;
+}
+
+.songs-side-a .song-name,
+.songs-side-a .song-duration{
+text-align:right;
+}
+
+.song:hover .song-name,
+.song:hover .song-en,
+.song:hover .song-duration,
+.song:hover .song-credits{
+color:#1C1C1C;
+}
+
+/* ---------- DURATION ---------- */
+
+.song-duration{
+position:absolute;
+font-family:"SimplerMono", monospace;
+font-weight:400;
+font-size:14px;
+line-height:1;
+color:var(--page-fg);
+white-space:nowrap;
+}
+
+/* ---------- CREDITS ---------- */
+
+.song-credits{
+position:absolute;
+font-family:"SimplerMono", monospace;
+font-weight:400;
+font-size:14px;
+line-height:1.2;
+color:var(--page-fg);
+white-space:nowrap;
+opacity:0;
+visibility:hidden;
+pointer-events:none;
+transition:opacity .18s ease, visibility .18s ease;
+}
+
+.songs-side-b .song-credits{
+text-align:left;
+}
+
+.songs-side-a .song-credits{
+text-align:right;
+}
+
+/* ---------- LISTENED MARK ---------- */
+
+.song-mark{
+position:absolute;
+left:-12px;
+right:-12px;
+top:50%;
+height:22px;
+width:calc(100% + 24px);
+transform:translateY(-50%);
+pointer-events:none;
+opacity:0;
+z-index:3;
+}
+
+.song-mark path{
+fill:none;
+stroke:var(--page-fg);
+stroke-width:1.1;
+stroke-linecap:round;
+stroke-linejoin:round;
+}
+
+.song.is-listened .song-mark{
+opacity:0.72;
+}
+
+/* -------------------- */
+/* SONG HOVER */
+/* -------------------- */
+
+.song:hover .song-en{
+opacity:0.72;
+visibility:visible;
+}
+
+.song:hover .song-credits{
+opacity:0.72;
+visibility:visible;
+}
+
+/* -------------------- */
+/* TEMP — LAYOUT TUNING */
+/* Remove class "layout-tuning" from index.html body to restore hover behavior. */
+/* -------------------- */
+
+/* Show all hover-only track content permanently; hover stays disabled */
+body.layout-tuning .song-en{
+max-width:320px;
+opacity:0.72;
+visibility:visible;
+overflow:visible;
+}
+
+body.layout-tuning .song-credits{
+opacity:0.72;
+visibility:visible;
+}
+
+/* -------------------- */
+/* INTRO SCREEN */
+/* -------------------- */
+
+.intro-screen{
+
+  position:fixed;
+
+  left:50%;
+  top:50%;
+
+  width:180vmax;
+  height:180vmax;
+
+  transform:translate(-50%,-50%);
+
+  border-radius:50%;
+
+  background:#1C1C1C;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  z-index:9999;
+
+  transition:transform 3s ease;
+}
+
+.intro-record{
+
+  position:relative;
+
+  width:500px;
+  height:500px;
+
+  cursor:pointer;
+
+  animation:spin 10s linear infinite;
+}
+
+.intro-record:hover{
+
+  animation-play-state:paused;
+}
+
+.label{
+
+  position:absolute;
+  inset:0;
+
+  width:100%;
+  height:100%;
+
+  object-fit:contain;
+
+  user-select:none;
+  pointer-events:none;
+}
+
+.filled{
+
+  opacity:0;
+
+  transition:opacity .3s ease;
+}
+
+.intro-record:hover .filled{
+
+  opacity:1;
+}
+
+body.entered .intro-screen{
+
+  transform:translate(250%,-50%);
+}
+
+@keyframes spin{
+
+  from{
+    transform:rotate(0deg);
+  }
+
+  to{
+    transform:rotate(360deg);
+  }
+}

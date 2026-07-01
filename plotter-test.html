@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plotter Machine — Milestone 2</title>
+  <style>
+    :root { --disc: min(80vmin, 720px); }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #0d0d0d;
+      color: #cfcfcf;
+      font-family: ui-monospace, Menlo, monospace;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      min-height: 100%;
+    }
+    .stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* The disc = the viewport the artboard maps into. */
+    #disc {
+      position: relative;
+      width: var(--disc);
+      height: var(--disc);
+      border-radius: 50%;
+      background: #1c1c1c;
+      box-shadow: 0 0 0 1px #2a2a2a, 0 30px 80px rgba(0,0,0,.6);
+    }
+    aside {
+      border-left: 1px solid #222;
+      padding: 20px 18px;
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    h1 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: #fafafa; }
+    .layer { margin-bottom: 10px; }
+    .layer b { color: #fafafa; }
+    .units { color: #8a8a8a; }
+    .skip { color: #e0794f; }
+    code { color: #7fb2ff; }
+    .controls {
+      position: fixed; left: 50%; bottom: 4vh; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(20,20,20,.9); padding: 10px 16px; border: 1px solid #2a2a2a;
+      border-radius: 4px;
+    }
+    .controls button {
+      font: inherit; font-size: 12px; color: #fafafa; background: transparent;
+      border: 1px solid #444; border-radius: 3px; padding: 5px 12px; cursor: pointer;
+    }
+    .controls button:hover { background: #2a2a2a; }
+    .controls input[type=range] { width: 260px; }
+    .controls .pval { width: 44px; text-align: right; color: #7fb2ff; }
+  </style>
+</head>
+
+<body>
+  <div class="stage">
+    <div id="disc"></div>
+  </div>
+
+  <aside>
+    <h1>Milestone 2 · Pen primitive</h1>
+    <p>Same three layers. Now driven by the generic pen: one
+       <em>progress 0–1</em> applied to every Unit (no scheduler yet).
+       Scrub to plot; drag back to erase — the pen is symmetric.</p>
+    <p>Each Unit draws as one continuous pen journey, stroke after
+       stroke, in document order.</p>
+    <hr style="border-color:#222" />
+    <div id="report">loading…</div>
+  </aside>
+
+  <div class="controls">
+    <button id="plot">Plot →</button>
+    <button id="erase">← Erase</button>
+    <input id="scrub" type="range" min="0" max="1000" value="0" />
+    <span class="pval" id="pval">0%</span>
+  </div>
+
+  <script src="js/plotter/scene.js"></script>
+  <script src="js/plotter/loader.js"></script>
+  <script src="js/plotter/artboard.js"></script>
+  <script src="js/plotter/renderer-svg.js"></script>
+  <script src="js/plotter/pen.js"></script>
+  <script src="js/plotter/index.js"></script>
+
+  <script>
+    // A minimal "score": just ordered files. Everything else is inferred.
+    const score = {
+      layers: [
+        { file: "frame.svg" },
+        { file: "cross.svg" },
+        { file: "ticks.svg" },
+        { file: "bad-viewbox.svg" },
+      ],
+    };
+
+    PlotterMachine.render(document.getElementById("disc"), {
+      baseDir: "assets/svg/songs/_engine-test/layers",
+      score,
+      style: { stroke: "#FAFAFA", strokeWidth: 1.4 },
+    }).then((result) => {
+      const { scene, allUnits } = result;
+
+      // ---- temporary test driver: one progress → all Units ----
+      const scrub = document.getElementById("scrub");
+      const pval = document.getElementById("pval");
+      let raf = null;
+
+      function setProgress(p) {
+        p = Math.max(0, Math.min(1, p));
+        for (const unit of allUnits) unit.drawer.draw(p);
+        scrub.value = String(Math.round(p * 1000));
+        pval.textContent = Math.round(p * 100) + "%";
+      }
+
+      function animateTo(targetP) {
+        cancelAnimationFrame(raf);
+        const startP = parseInt(scrub.value, 10) / 1000;
+        const dur = 2600;
+        const t0 = performance.now();
+        const step = (now) => {
+          const k = Math.min(1, (now - t0) / dur);
+          setProgress(startP + (targetP - startP) * k);
+          if (k < 1) raf = requestAnimationFrame(step);
+        };
+        raf = requestAnimationFrame(step);
+      }
+
+      scrub.addEventListener("input", () => {
+        cancelAnimationFrame(raf);
+        setProgress(parseInt(scrub.value, 10) / 1000);
+      });
+      document.getElementById("plot").addEventListener("click", () => animateTo(1));
+      document.getElementById("erase").addEventListener("click", () => animateTo(0));
+
+      // ---- report ----
+      const loaded = new Set(scene.layers.map((l) => l.id));
+      const lines = [
+        `<div class="layer">artboard: <code>${scene.artboard.w} × ${scene.artboard.h}</code></div>`,
+      ];
+      for (const layer of scene.layers) {
+        lines.push(
+          `<div class="layer"><b>${layer.id}</b> ` +
+          `<span class="units">${layer.units.length} units · ` +
+          `${layer.units.map((u) => u.id).join(", ")}</span></div>`
+        );
+      }
+      for (const entry of score.layers) {
+        const id = entry.file.replace(/\.[^.]+$/, "");
+        if (!loaded.has(id)) {
+          lines.push(`<div class="layer skip">${id} — skipped (viewBox mismatch)</div>`);
+        }
+      }
+      document.getElementById("report").innerHTML = lines.join("");
+
+      // Auto-plot once so the page demonstrates drawing on load.
+      animateTo(1);
+    }).catch((err) => {
+      document.getElementById("report").innerHTML =
+        `<span class="skip">${err.message}</span>`;
+      console.error(err);
+    });
+  </script>
+</body>
+
+</html>

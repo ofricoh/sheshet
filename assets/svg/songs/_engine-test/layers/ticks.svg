@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <g id="tick01">
+    <path d="M10 30 V10 H30"/>
+  </g>
+  <g id="tick02">
+    <path d="M170 10 H190 V30"/>
+  </g>
+  <g id="tick03">
+    <path d="M190 170 V190 H170"/>
+  </g>
+  <g id="tick04">
+    <path d="M30 190 H10 V170"/>
+  </g>
+  <path id="diag" d="M10 190 L190 10"/>
+</svg>

@@ -1,0 +1,390 @@
+.lyrics-page{
+  position:fixed;
+  inset:0;
+  z-index:15;
+  pointer-events:auto;
+}
+
+/* ============================================================
+   SONG HEADERS — home visual language, lyric-insert positions
+   Circle / Hebrew title / English title / duration / credits
+   reuse the shared .songs-side-* styles from style.css.
+   Only the anchor positions differ from the Home page.
+   ============================================================ */
+
+/* English title + credits are always visible on the lyric insert
+   (on Home they are hover-only). */
+body.lyrics-mode .song-en{
+  opacity:1;
+  visibility:visible;
+}
+
+body.lyrics-mode .song-credits{
+  opacity:1;
+  visibility:visible;
+}
+
+/* Colored circles — visible only on the lyric insert (with titles). */
+body.lyrics-mode .song .song-dot{
+  background:var(--song-color);
+  border-color:var(--song-color);
+  color:var(--color-white);
+}
+
+/* During the forward intro, circles stay plain until titles appear. */
+html.lyrics-intro:not(.lyrics-reveal-titles) .song .song-dot{
+  background:var(--dot-bg);
+  border-color:var(--dot-border);
+  color:var(--dot-text);
+}
+
+html.lyrics-intro.lyrics-reveal-titles .song .song-dot{
+  background:var(--song-color);
+  border-color:var(--song-color);
+  color:var(--color-white);
+  transition:
+    background 360ms ease,
+    border-color 360ms ease,
+    color 360ms ease;
+}
+
+/* -------------------- A1 — circle center anchor -------------------- */
+
+.track-a1{
+  top:188px;
+  right:208px;
+}
+
+.track-a1 .song-dot{ top:0; }
+
+.track-a1 .song-name{
+  top:-11px;
+  right:25px;
+}
+
+.track-a1 .song-en{
+  top:-7px;
+  right:-25px;
+  transform:translateX(100%);
+}
+
+.track-a1 .song-duration{
+  top:-7px;
+  right:112px;
+}
+
+.track-a1 .song-credits{
+  top:18px;
+  right:28px;
+}
+
+/* -------------------- A3 — circle center anchor -------------------- */
+
+.track-a3{
+  top:470px;
+  right:730px;
+}
+
+.track-a3 .song-dot{ top:0; }
+
+.track-a3 .song-name{
+  top:-11px;
+  right:25px;
+}
+
+.track-a3 .song-en{
+  top:-7px;
+  right:-25px;
+  transform:translateX(100%);
+}
+
+.track-a3 .song-duration{
+  top:-7px;
+  right:232px;
+}
+
+.track-a3 .song-credits{
+  top:18px;
+  right:28px;
+}
+
+/* -------------------- B1 — circle center anchor -------------------- */
+
+.track-b1{
+  top:565px;
+  right:208px;
+}
+
+.track-b1 .song-dot{ top:0; }
+
+.track-b1 .song-name{
+  top:-11px;
+  right:25px;
+}
+
+.track-b1 .song-en{
+  top:-7px;
+  right:-25px;
+  transform:translateX(100%);
+}
+
+.track-b1 .song-duration{
+  top:-7px;
+  right:188px;
+}
+
+.track-b1 .song-credits{
+  top:18px;
+  right:28px;
+}
+
+/* -------------------- A5 — circle center anchor (RTL title block) -------------------- */
+
+.track-a5{
+  top:377px;
+  left:312px;
+}
+
+.track-a5 .song-dot{
+  top:0;
+  left:auto;
+  right:0;
+  transform:translate(50%, -50%);
+}
+
+.track-a5 .song-name{
+  top:-11px;
+  right:25px;
+  left:auto;
+}
+
+.track-a5 .song-en{
+  top:-7px;
+  right:-25px;
+  left:auto;
+  transform:translateX(100%);
+}
+
+.track-a5 .song-duration{
+  top:-7px;
+  right:112px;
+  left:auto;
+}
+
+.track-a5 .song-credits{
+  top:18px;
+  right:28px;
+  left:auto;
+}
+
+/* -------------------- */
+/* LYRICS TEXT */
+/* -------------------- */
+
+.lyrics-text{
+
+  position:absolute;
+
+  right:240px;
+  top:266px;
+
+  width:320px;
+
+  font-family:"SimplerMono";
+  font-weight:400;
+  font-size:14px;
+  line-height:1.3;
+
+  color:#1C1C1C;
+
+  direction:rtl;
+  text-align:right;
+}
+
+/* -------------------- */
+/* A3 TEXT */
+/* -------------------- */
+
+.lyrics-a3-wrapper{
+
+  position:absolute;
+
+  right:762px;
+  top:549px;
+}
+
+.lyrics-a3-col1{
+
+  position:absolute;
+
+  right:0;
+  top:0;
+
+  width:180px;
+}
+
+.lyrics-a3-col2{
+
+  position:absolute;
+
+  right:220px;
+  top:0;
+
+  width:180px;
+}
+
+.lyrics-a3-col3{
+
+  position:absolute;
+
+  right:440px;
+  top:0;
+
+  width:180px;
+}
+
+.lyrics-a3-col2{
+  right:180px;
+}
+
+.lyrics-a3-col3{
+  right:360px;
+}
+
+/* -------------------- */
+/* A5 TEXT */
+/* -------------------- */
+
+.lyrics-a5-wrapper{
+
+  position:absolute;
+
+  right:1146px;
+  top:188px;
+}
+
+.lyrics-a5-text{
+
+  position:relative;
+
+  width:220px;
+}
+
+/* -------------------- */
+/* B1 TEXT */
+/* -------------------- */
+
+.lyrics-b1-wrapper{
+
+  position:absolute;
+
+  right:240px;
+  top:642px;
+}
+
+.lyrics-b1-col1{
+
+  position:absolute;
+
+  right:0;
+  top:0;
+
+  width:180px;
+}
+
+.lyrics-b1-col2{
+
+  position:absolute;
+
+  right:180px;
+  top:0;
+
+  width:180px;
+}
+
+.glitch-letter{
+  display:inline;
+  cursor:default;
+}
+
+/* ============================================================
+   HOME → LYRICS TRANSITION
+   Intro state hides titles + lyrics until the circles arrive.
+   Circle movement is driven by js/lyrics-transition.js (FLIP).
+   ============================================================ */
+
+/* During the intro, suppress CSS transitions on the song blocks so
+   the FLIP (Web Animations) drives the movement cleanly. */
+html.lyrics-intro .song{
+  transition:none !important;
+}
+
+/* Circles start hidden until JS positions them at the Home coords. */
+html.lyrics-intro .song{
+  opacity:0;
+}
+
+/* Titles + credits hidden until the circles finish moving. */
+html.lyrics-intro .song .song-name,
+html.lyrics-intro .song .song-en,
+html.lyrics-intro .song .song-duration,
+html.lyrics-intro .song .song-credits{
+  opacity:0;
+}
+
+/* Lyrics hidden until the very end. */
+html.lyrics-intro .lyrics-text{
+  opacity:0;
+}
+
+/* Reveal titles (Home styling) once circles have arrived. */
+html.lyrics-intro.lyrics-reveal-titles .song .song-name,
+html.lyrics-intro.lyrics-reveal-titles .song .song-en,
+html.lyrics-intro.lyrics-reveal-titles .song .song-duration,
+html.lyrics-intro.lyrics-reveal-titles .song .song-credits{
+  opacity:1;
+  transition:opacity 360ms ease;
+}
+
+/* Finally, fade the lyrics in underneath each song. */
+html.lyrics-intro.lyrics-reveal-text .lyrics-text{
+  opacity:1;
+  transition:opacity 520ms ease;
+}
+
+/* ============================================================
+   LYRICS → HOME TRANSITION (reverse)
+   ============================================================ */
+
+body.is-home-exit .song{
+  pointer-events:none;
+}
+
+body.is-home-exit .song .song-name,
+body.is-home-exit .song .song-en,
+body.is-home-exit .song .song-duration,
+body.is-home-exit .song .song-credits{
+  opacity:0 !important;
+  transition:opacity 360ms ease;
+}
+
+body.is-home-exit .lyrics-text{
+  opacity:0 !important;
+  transition:opacity 520ms ease;
+}
+
+/* Strip lyric-insert colors before circles travel back to Home. */
+body.lyrics-mode.is-home-exit-dots-plain .song .song-dot,
+body.lyrics-mode.is-home-exit-moving .song .song-dot{
+  background:var(--dot-bg);
+  border-color:var(--dot-border);
+  color:var(--dot-text);
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+body.is-home-exit.is-home-exit-moving .song{
+  transition:none !important;
+}

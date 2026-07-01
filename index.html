@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="he">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>ששת</title>
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/home-tracks.css">
+
+  <script>
+    if (sessionStorage.getItem("sheshet_home_transition") === "1") {
+      document.documentElement.classList.add("home-intro");
+    }
+  </script>
+</head>
+
+<body class="intro-active home-mode">
+
+  <div class="intro-screen">
+
+    <div class="intro-record">
+  
+      <img
+        class="label outline"
+        src="assets/svg/sheshet-label-outline.svg"
+        alt=""
+      >
+  
+      <img
+        class="label filled"
+        src="assets/svg/sheshet-label-filled.svg"
+        alt=""
+      >
+  
+    </div>
+  
+  </div>
+
+  <div class="grid-layer">
+    <svg class="grid-svg"></svg>
+  </div>
+
+  <!-- TITLE -->
+
+  <div class="album-title">
+
+    <div class="album-letter taf-left">
+      <img class="outline" src="assets/svg/sheshet_taf-left.svg" alt="">
+      <img class="filled" src="assets/svg/sheshet_taffill-left.svg" alt="">
+    </div>
+  
+    <a href="about.html" class="album-letter shin-center">
+
+      <img
+        class="outline"
+        src="assets/svg/sheshet_shin-center.svg"
+        alt=""
+      >
+    
+      <img
+        class="filled"
+        src="assets/svg/sheshet_shinfill-center.svg"
+        alt=""
+      >
+    
+    </a>
+  
+    <a href="lyrics.html" class="album-letter shin-right">
+
+      <img
+        class="outline"
+        src="assets/svg/sheshet_shin-right.svg"
+        alt=""
+      >
+    
+      <img
+        class="filled"
+        src="assets/svg/sheshet_shinfill-right.svg"
+        alt=""
+      >
+    
+    </a>
+  
+  </div>
+
+  <div class="side-label side-label-a" aria-hidden="true">Side A</div>
+  <div class="side-label side-label-b" aria-hidden="true">Side B</div>
+
+<section class="songs-side-a">
+
+  <div class="side-tracklist">
+
+  <a href="songs/inbalim.html" class="song track-a1">
+    <div class="song-dot">1</div>
+    <div class="song-name">ענבלים</div>
+    <span class="song-en">Cymbals</span>
+    <div class="song-duration">(4:55)</div>
+    <div class="song-credits">
+      מילים: נתן אלתרמן<br>
+      לחן: שם טוב לוי
+    </div>
+  </a>
+
+  <div class="song track-a2 is-instrumental">
+    <div class="song-dot">2</div>
+    <div class="song-name">צבעים</div>
+    <span class="song-en">Aquarel</span>
+    <div class="song-duration">(6:47)</div>
+    <div class="song-credits">לחן: שם טוב לוי</div>
+  </div>
+
+  <div class="song track-a3">
+    <div class="song-dot">3</div>
+    <div class="song-name">סמבה ברגל שמאל</div>
+    <span class="song-en">All Thumbs Samba</span>
+    <div class="song-duration">(3:30)</div>
+    <div class="song-credits">
+      מילים: יעקב גלעד<br>
+      לחן: יהודית רביץ
+    </div>
+  </div>
+
+  <div class="song track-a4 is-instrumental">
+    <div class="song-dot">4</div>
+    <div class="song-name">7/8</div>
+    <span class="song-en">seven–eight</span>
+    <div class="song-duration">(4:09)</div>
+    <div class="song-credits">לחן: שם טוב לוי</div>
+  </div>
+
+  <div class="song track-a5">
+    <div class="song-dot">5</div>
+    <div class="song-name">לו באת</div>
+    <span class="song-en">If You Had Come</span>
+    <div class="song-duration">(2:42)</div>
+    <div class="song-credits">
+      מילים: יונתן רטוש<br>
+      לחן: שם טוב לוי
+    </div>
+  </div>
+
+  </div>
+
+</section>
+
+<section class="songs-side-b">
+
+  <div class="side-tracklist">
+
+  <div class="song track-b1">
+    <div class="song-dot">1</div>
+    <div class="song-name">בלילות הסתיו</div>
+    <span class="song-en">Autumn Nights</span>
+    <div class="song-duration">(4:45)</div>
+    <div class="song-credits">
+      מילים: דוד פוגל<br>
+      לחן: שם טוב לוי
+    </div>
+  </div>
+
+  <div class="song track-b2 is-instrumental">
+    <div class="song-dot">2</div>
+    <div class="song-name">דבקה</div>
+    <span class="song-en">Debka</span>
+    <div class="song-duration">(6:12)</div>
+    <div class="song-credits">לחן: שם טוב לוי</div>
+  </div>
+
+  <div class="song track-b3 is-instrumental">
+    <div class="song-dot">3</div>
+    <div class="song-name">דינוזאורוס הבן</div>
+    <span class="song-en">Dinosaurus Jr.</span>
+    <div class="song-duration">(6:35)</div>
+    <div class="song-credits">לחן: שמוליק ארוך</div>
+  </div>
+
+  <div class="song track-b4 is-instrumental">
+    <div class="song-dot">4</div>
+    <div class="song-name">פה מינור</div>
+    <span class="song-en">F Minor</span>
+    <div class="song-duration">(6:25)</div>
+    <div class="song-credits">לחן: שם טוב לוי</div>
+  </div>
+
+  </div>
+
+</section>
+
+  <!-- FOOTER STICKERS -->
+
+  <div class="footer-sticker-left">
+    <img src="assets/images/stereo_footersticker.png" alt="">
+  </div>
+
+  <div class="footer-sticker-right">
+    <img src="assets/images/acum_footersticker.png" alt="">
+  </div>
+
+  <!-- FOOTER CREDITS -->
+
+  <div class="footer-credits">
+    CBS are Trademarks of CBS Inc / ℗&© 1977 CBS, Inc / Manufactured and distributed by CBS Records Ltd. P.O.B 681, Tel Aviv, Israel / מיוצר ומופץ ע״י תקליטי סי בי אס בע״מ ת.ד 681 תל אביב / תוצרת ישראל
+  </div>
+
+  <script>
+
+    const isReload =
+    performance.getEntriesByType("navigation")[0]?.type === "reload";
+    
+    if(isReload){
+    
+      sessionStorage.removeItem("sheshet_intro_seen");
+    
+    }
+    
+    const introRecord =
+    document.querySelector(".intro-record");
+    
+    if(
+      sessionStorage.getItem("sheshet_intro_seen") === "true" ||
+      sessionStorage.getItem("sheshet_home_transition") === "1"
+    ){
+    
+      document.body.classList.remove("intro-active");
+      document.body.classList.add("entered");
+    
+    }
+    
+    introRecord.addEventListener("click", () => {
+    
+      sessionStorage.setItem("sheshet_intro_seen", "true");
+    
+      document.body.classList.remove("intro-active");
+      document.body.classList.add("entered");
+    
+    });
+    
+    </script>
+
+  <script src="js/listened-tracks.js"></script>
+  <script src="js/home-album.js"></script>
+  <script src="js/lyrics-transition.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+
+</html>

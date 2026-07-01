@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="he">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ששת | ענבלים</title>
+
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/songs/inbalim.css">
+
+</head>
+
+<body class="plotter-page">
+
+  <div class="grid-layer">
+    <svg class="grid-svg"></svg>
+  </div>
+
+  <!-- Layer order: record base (bottom) -> engravings -> label (top) -->
+  <div class="plotter-viewport">
+    <div class="plotter-spin-group" id="plotterSpinGroup">
+
+      <div class="plotter-disc" id="plotterRecord"></div>
+
+      <div class="plotter-mount" id="plotterMount"></div>
+
+      <div class="plotter-label-layer" id="plotterLabelLayer">
+        <div class="plotter-label" id="plotterLabel">
+          <img
+            class="plotter-label-svg"
+            src="../assets/svg/songs/inbalim/inbalim.svg"
+            alt=""
+          >
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Minimal transport -->
+  <div class="plotter-controls">
+    <button id="playBtn" class="plotter-btn">Play</button>
+    <button id="pauseBtn" class="plotter-btn">Pause</button>
+  </div>
+
+  <div class="plotter-timeline-wrap">
+    <input
+      id="timeline"
+      class="plotter-timeline"
+      type="range"
+      min="0"
+      max="1000"
+      value="0"
+      step="1"
+      aria-label="timeline"
+    >
+  </div>
+
+  <audio
+    id="inbalimAudio"
+    src="../audio/songs/inbalim/inbalim.mp3"
+    preload="metadata"
+  ></audio>
+
+  <!-- Flute stem — analysis only, never audible -->
+  <audio
+    id="inbalimFluteStem"
+    src="../audio/songs/inbalim/inbalim-other-B%20minor-220bpm-441hz.mp3"
+    preload="metadata"
+    muted
+  ></audio>
+
+  <!-- Guitar stem — analysis only, never audible -->
+  <audio
+    id="inbalimGuitarStem"
+    src="../audio/songs/inbalim/inbalim-guitars-B%20minor-220bpm-441hz.mp3"
+    preload="metadata"
+    muted
+  ></audio>
+
+  <!-- Drums stem — analysis only, never audible -->
+  <audio
+    id="inbalimDrumsStem"
+    src="../audio/songs/inbalim/inbalim-drums-B%20minor-220bpm-441hz.mp3"
+    preload="metadata"
+    muted
+  ></audio>
+
+  <script src="../js/listened-tracks.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/plotter/scene.js"></script>
+  <script src="../js/plotter/loader.js"></script>
+  <script src="../js/plotter/artboard.js"></script>
+  <script src="../js/plotter/renderer-svg.js"></script>
+  <script src="../js/plotter/path-utils.js"></script>
+  <script src="../js/plotter/pen.js"></script>
+  <script src="../js/plotter/scheduler.js"></script>
+  <script src="../js/plotter/audio-analyser.js"></script>
+  <script src="../js/plotter/modulation.js"></script>
+  <script src="../js/plotter/transport.js"></script>
+  <script src="../js/plotter/conductor.js"></script>
+  <script src="../js/plotter/index.js"></script>
+  <script src="../js/songs/inbalim.js"></script>
+
+</body>
+
+</html>

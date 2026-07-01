@@ -1,0 +1,347 @@
+/* ============================================================
+   HOMEPAGE TRACKLIST — home-tracks.css
+   Loaded on index.html only.
+   Dual-column layout: Side B (left) · Side A (right)
+   ============================================================ */
+
+
+/* ============================================================
+   SIDE LABELS — manual controls
+   Edit these values to adjust label placement and underline.
+   Does not affect song positions or any other layout.
+   ============================================================ */
+
+:root {
+
+  /* Side A label position */
+  --side-label-a-top:464px;
+  --side-label-a-right: 80px;
+  --side-label-a-left: auto;
+
+  /* Side B label position */
+  --side-label-b-top: 464px;
+  --side-label-b-left: 80px;
+  --side-label-b-right: auto;
+
+  /* Underline beneath the active side label */
+  --side-label-underline-thickness: 1px;
+
+}
+
+.side-label-a {
+  position: fixed;
+  top: var(--side-label-a-top);
+  right: var(--side-label-a-right);
+  left: var(--side-label-a-left);
+}
+
+.side-label-b {
+  position: fixed;
+  top: var(--side-label-b-top);
+  left: var(--side-label-b-left);
+  right: var(--side-label-b-right);
+}
+
+
+/* ============================================================
+   SONG POSITIONS
+   Each track anchor = numbered circle center.
+   Edit top / left / right in px to move the whole song block.
+   ============================================================ */
+
+
+/* -------------------- B1 — Side B -------------------- */
+
+.track-b1 {
+  top: 283px;
+  left: 418px;
+}
+
+.track-b1 .song-dot {
+  top: 0;
+}
+
+.track-b1 .song-name {
+  top: -11px;
+  left: 25px;
+}
+
+.track-b1 .song-en {
+  top: -7px;
+  left: -25px;
+  transform: translateX(-100%);
+}
+
+.track-b1 .song-duration {
+  top: -7px;
+  left: 198px;
+}
+
+.track-b1 .song-credits {
+  top: 18px;
+  left: 28px;
+}
+
+
+/* -------------------- B2 — Side B -------------------- */
+
+.track-b2 {
+  top: 377px;
+  left: 418px;
+}
+
+.track-b2 .song-dot {
+  top: 0;
+}
+
+.track-b2 .song-name {
+  top: -11px;
+  left: 25px;
+}
+
+.track-b2 .song-en {
+  top: -7px;
+  left: -25px;
+  transform: translateX(-100%);
+}
+
+.track-b2 .song-duration {
+  top: -7px;
+  left: 102px;
+}
+
+.track-b2 .song-credits {
+  top: 18px;
+  left: 28px;
+}
+
+
+/* -------------------- B3 — Side B -------------------- */
+
+.track-b3 {
+  top: 472px;
+  left: 418px;
+}
+
+.track-b3 .song-dot {
+  top: 0;
+}
+
+.track-b3 .song-name {
+  top: -11px;
+  left: 25px;
+}
+
+.track-b3 .song-en {
+  top: -7px;
+  left: -25px;
+  transform: translateX(-100%);
+}
+
+.track-b3 .song-duration {
+  top: -7px;
+  left: 206px;
+}
+
+.track-b3 .song-credits {
+  top: 18px;
+  left: 28px;
+}
+
+
+/* -------------------- B4 — Side B -------------------- */
+
+.track-b4 {
+  top: 565px;
+  left: 418px;
+}
+
+.track-b4 .song-dot {
+  top: 0;
+}
+
+.track-b4 .song-name {
+  top: -11px;
+  left: 25px;
+}
+
+.track-b4 .song-en {
+  top: -7px;
+  left: -25px;
+  transform: translateX(-100%);
+}
+
+.track-b4 .song-duration {
+  top: -7px;
+  left: 136px;
+}
+
+.track-b4 .song-credits {
+  top: 18px;
+  left: 28px;
+}
+
+
+/* -------------------- A1 — Side A -------------------- */
+
+.track-a1 {
+  top: 283px;
+  right: 416px;
+}
+
+.track-a1 .song-dot {
+  top: 0;
+}
+
+.track-a1 .song-name {
+  top: -11px;
+  right: 25px;
+}
+
+.track-a1 .song-en {
+  top: -7px;
+  right: -25px;
+  transform: translateX(100%);
+}
+
+.track-a1 .song-duration {
+  top: -7px;
+  right: 112px;
+}
+
+.track-a1 .song-credits {
+  top: 18px;
+  right: 28px;
+}
+
+
+/* -------------------- A2 — Side A -------------------- */
+
+.track-a2 {
+  top: 377px;
+  right: 416px;
+}
+
+.track-a2 .song-dot {
+  top: 0;
+}
+
+.track-a2 .song-name {
+  top: -11px;
+  right: 25px;
+}
+
+.track-a2 .song-en {
+  top: -7px;
+  right: -25px;
+  transform: translateX(100%);
+}
+
+.track-a2 .song-duration {
+  top: -7px;
+  right: 105px;
+}
+
+.track-a2 .song-credits {
+  top: 18px;
+  right: 28px;
+}
+
+
+/* -------------------- A3 — Side A -------------------- */
+
+.track-a3 {
+  top: 472px;
+  right: 416px;
+}
+
+.track-a3 .song-dot {
+  top: 0;
+}
+
+.track-a3 .song-name {
+  top: -11px;
+  right: 25px;
+}
+
+.track-a3 .song-en {
+  top: -7px;
+  right: -25px;
+  transform: translateX(100%);
+}
+
+.track-a3 .song-duration {
+  top: -7px;
+  right: 232px;
+}
+
+.track-a3 .song-credits {
+  top: 18px;
+  right: 28px;
+}
+
+
+/* -------------------- A4 — Side A -------------------- */
+
+.track-a4 {
+  top: 565px;
+  right: 416px;
+}
+
+.track-a4 .song-dot {
+  top: 0;
+}
+
+.track-a4 .song-name {
+  top: -11px;
+  right: 25px;
+}
+
+.track-a4 .song-en {
+  top: -7px;
+  right: -25px;
+  transform: translateX(100%);
+}
+
+.track-a4 .song-duration {
+  top: -7px;
+  right: 78px;
+}
+
+.track-a4 .song-credits {
+  top: 18px;
+  right: 28px;
+}
+
+
+/* -------------------- A5 — Side A -------------------- */
+
+.track-a5 {
+  top: 659px;
+  right: 416px;
+}
+
+.track-a5 .song-dot {
+  top: 0;
+}
+
+.track-a5 .song-name {
+  top: -11px;
+  right: 25px;
+}
+
+.track-a5 .song-en {
+  top: -7px;
+  right: -25px;
+  transform: translateX(100%);
+}
+
+.track-a5 .song-duration {
+  top: -7px;
+  right: 112px;
+}
+
+.track-a5 .song-credits {
+  top: 18px;
+  right: 28px;
+}

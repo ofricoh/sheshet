@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <g id="crosshair">
+    <path d="M100 30 V170"/>
+    <path d="M30 100 H170"/>
+  </g>
+  <g id="ring">
+    <circle cx="100" cy="100" r="22"/>
+  </g>
+</svg>
