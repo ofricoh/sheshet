@@ -1,11 +1,74 @@
 /* ============================================================
-   INBALIM — song-specific plotter overrides
-   Shared record layout: css/stage.css
-   Layer timelines: js/songs/inbalim.js
+   PLOTTER PAGE — centered vinyl composition
+   Layer timelines: js/songs/inbalim.js (INBALIM_LAYERS)
+   This file handles page layout, disc scale, and canvas stacking.
    ============================================================ */
 
+.plotter-page {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-white);
+}
+
+/* ============================================================
+   RECORD COMPOSITION
+   ------------------------------------------------------------
+   --plotter-vinyl-size  : black disc only — may crop past viewport
+   --plotter-label-size  : cream center label — fixed, never scales
+                           with the vinyl
+   ============================================================ */
 :root {
+  --plotter-vinyl-size: 175vmin;
+  --plotter-label-size: min(50vmin, 400px); /* ~22% smaller than prior */
   --plotter-spin-duration: 120s;
+}
+
+/* ---------- centered record stage ---------- */
+
+.plotter-viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Vinyl stage — disc, artwork, and label rotate together as one object */
+.plotter-spin-group {
+  position: relative;
+  width: var(--plotter-vinyl-size);
+  height: var(--plotter-vinyl-size);
+  flex-shrink: 0;
+  transform-origin: center center;
+  animation: spin var(--plotter-spin-duration) linear infinite;
+  animation-play-state: paused;
+  will-change: transform;
+}
+
+.plotter-disc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #1c1c1c;
+}
+
+/* ---------- plotter SVG mount (on the disc surface) ---------- */
+
+.plotter-mount {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+
+.plotter-mount svg.plotter-layer {
+  overflow: visible;
 }
 
 /* legacy canvas selectors kept for reference — unused on this page */
@@ -15,7 +78,7 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  opacity: 0;
+  opacity: 0; /* toggled by composition-engine.js per layer */
 }
 
 .plotter-canvas-plants {
@@ -26,4 +89,134 @@
 .plotter-canvas-zoetrope {
   z-index: 2;
   opacity: 0;
+}
+
+/* ---------- centre label (above engravings) ---------- */
+
+.plotter-label-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.plotter-label {
+  width: var(--plotter-label-size);
+  height: var(--plotter-label-size);
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.plotter-label-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ---------- transport ---------- */
+
+.plotter-controls {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.plotter-btn {
+  font-family: "SimplerMono", monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1c1c1c;
+  background: transparent;
+  border: 1.5px solid #1c1c1c;
+  border-radius: 2px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.plotter-btn:hover {
+  background: #1c1c1c;
+  color: var(--color-white);
+}
+
+/* ---------- timeline / scrubber (over the vinyl) ---------- */
+
+.plotter-timeline-wrap {
+  position: fixed;
+  left: 50%;
+  bottom: 12vh;
+  transform: translateX(-50%);
+  width: min(380px, 52vw);
+  z-index: 20;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Dev-only — toggled from js/songs/inbalim.js */
+.plotter-debug-timecode {
+  font-family: "SimplerMono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: #1c1c1c;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(28, 28, 28, 0.2);
+  border-radius: 2px;
+  padding: 4px 10px;
+  user-select: all;
+  cursor: text;
+  white-space: nowrap;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.12);
+}
+
+.plotter-timeline {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 2px;
+  background: var(--color-white);
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
+}
+
+.plotter-timeline::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 1.5px solid rgba(28, 28, 28, 0.25);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.plotter-timeline::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid rgba(28, 28, 28, 0.25);
+  border-radius: 50%;
+  background: var(--color-white);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.plotter-timeline::-moz-range-track {
+  height: 2px;
+  background: var(--color-white);
 }
