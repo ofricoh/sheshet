@@ -794,6 +794,291 @@
     });
   }
 
+  /* ----------------------------------------------------------
+     STRATEGY: long-first / short-first
+     Paths enter the pool shortest-first or longest-first;
+     shorter lines join while longer ones are still drawing.
+     Random endpoint per path, same pen direction on erase.
+     ---------------------------------------------------------- */
+
+  function unitPathLength(handle) {
+    const paths = (handle && handle.paths) || [];
+    let sum = 0;
+    for (const el of paths) {
+      try {
+        if (typeof el.getTotalLength === "function") {
+          sum += el.getTotalLength();
+        }
+      } catch (_) {
+        /* ignore unmeasurable geometry */
+      }
+    }
+    return sum;
+  }
+
+  function scheduleLengthFirst(units, layerDef, rng, handlesById, longestFirst) {
+    const drawAt = layerDef.draw?.at ?? 10;
+    const drawUntil =
+      layerDef.draw?.until ??
+      drawAt + (layerDef.draw?.duration ?? 24);
+    const eraseFrom = layerDef.erase?.from ?? null;
+    const eraseUntil = layerDef.erase?.until ?? null;
+
+    const pool = layerDef.pool || {};
+    const durationRange = pool.durationRange || [2.8, 7.5];
+    const eraseDurationRange = pool.eraseDurationRange || [0.55, 1.5];
+
+    const order = units.slice().sort((a, b) => {
+      const lenA = unitPathLength(handlesById && handlesById.get(a.id));
+      const lenB = unitPathLength(handlesById && handlesById.get(b.id));
+      if (Math.abs(lenA - lenB) > 1e-3) {
+        return longestFirst ? lenB - lenA : lenA - lenB;
+      }
+      return rng() - 0.5;
+    });
+
+    const durations = order.map(() =>
+      lerp(durationRange[0], durationRange[1], rng())
+    );
+
+    const { starts, durations: drawDurations } = schedulePoolQueue(
+      order,
+      durations,
+      drawAt,
+      drawUntil,
+      pool,
+      rng
+    );
+    enforceDrawWindow(
+      starts,
+      drawDurations,
+      drawAt,
+      drawUntil,
+      pool.minDuration ?? 0.4
+    );
+
+    let eraseStarts = null;
+    let eraseDurations = null;
+
+    if (eraseFrom != null && eraseUntil != null) {
+      const eraseWindow = Math.max(0.1, eraseUntil - eraseFrom);
+      eraseDurations = order.map(() =>
+        lerp(eraseDurationRange[0], eraseDurationRange[1], rng())
+      );
+      eraseStarts = order.map(() =>
+        lerp(eraseFrom, eraseUntil - eraseDurationRange[1], rng())
+      );
+
+      for (let i = 0; i < order.length; i++) {
+        if (eraseStarts[i] + eraseDurations[i] > eraseUntil) {
+          eraseDurations[i] = Math.max(0.25, eraseUntil - eraseStarts[i]);
+        }
+      }
+
+      let lastFinish = eraseFrom;
+      for (let i = 0; i < order.length; i++) {
+        lastFinish = Math.max(lastFinish, eraseStarts[i] + eraseDurations[i]);
+      }
+      if (lastFinish > eraseUntil) {
+        const scale = eraseWindow / (lastFinish - eraseFrom);
+        for (let i = 0; i < order.length; i++) {
+          eraseStarts[i] = eraseFrom + (eraseStarts[i] - eraseFrom) * scale;
+          eraseDurations[i] = Math.max(0.25, eraseDurations[i] * scale);
+        }
+      }
+    }
+
+    return order.map((unit, i) => {
+      const handle = handlesById && handlesById.get(unit.id);
+      const dir = unitDrawDirection(handle, rng);
+
+      return {
+        unitId: unit.id,
+        draw: {
+          start: starts[i],
+          duration: drawDurations[i],
+          phase: dir.phases.length === 1 ? dir.phases[0] : dir.phases,
+          reverse: dir.reverses.length === 1 ? dir.reverses[0] : dir.reverses,
+          phases: dir.phases,
+          reverses: dir.reverses,
+        },
+        erase:
+          eraseStarts && eraseDurations
+            ? { start: eraseStarts[i], duration: eraseDurations[i] }
+            : null,
+      };
+    });
+  }
+
+  function scheduleLongFirst(units, layerDef, rng, handlesById) {
+    return scheduleLengthFirst(units, layerDef, rng, handlesById, true);
+  }
+
+  function scheduleShortFirst(units, layerDef, rng, handlesById) {
+    return scheduleLengthFirst(units, layerDef, rng, handlesById, false);
+  }
+
+  /* ----------------------------------------------------------
+     STRATEGY: long-then-short
+     Long railway lines enter the pool first at a slow pace;
+     shorter segments join while long lines are still drawing
+     but complete quickly once they start.
+     ---------------------------------------------------------- */
+
+  function longUnitIds(units, handlesById, share) {
+    const ranked = units
+      .map((unit) => ({
+        id: unit.id,
+        len: unitPathLength(handlesById && handlesById.get(unit.id)),
+      }))
+      .filter((entry) => entry.len > 0)
+      .sort((a, b) => b.len - a.len);
+
+    const ids = new Set();
+    if (!ranked.length) return ids;
+
+    const lineShare = share ?? 0.32;
+    const count = Math.max(1, Math.ceil(ranked.length * lineShare));
+    const threshold = ranked[Math.min(count, ranked.length) - 1].len;
+
+    for (const entry of ranked) {
+      if (entry.len >= threshold) ids.add(entry.id);
+    }
+    return ids;
+  }
+
+  function scheduleLongThenShort(units, layerDef, rng, handlesById) {
+    const drawAt = layerDef.draw?.at ?? 11.5;
+    const drawUntil =
+      layerDef.draw?.until ??
+      drawAt + (layerDef.draw?.duration ?? 35);
+    const eraseFrom = layerDef.erase?.from ?? null;
+    const eraseUntil = layerDef.erase?.until ?? null;
+
+    const pool = layerDef.pool || {};
+    const share = layerDef.longLineShare ?? pool.longLineShare ?? 0.32;
+    const longIds = longUnitIds(units, handlesById, share);
+
+    const longPool = Object.assign(
+      {
+        maxConcurrent: 3,
+        durationRange: [10, 26],
+        minDuration: 8,
+        staggerRange: [1.4, 3.8],
+      },
+      pool,
+      pool.long || {}
+    );
+
+    const shortPool = Object.assign(
+      {
+        maxConcurrent: 4,
+        durationRange: [1.2, 3.4],
+        minDuration: 0.85,
+        staggerRange: [0.12, 0.55],
+      },
+      pool,
+      pool.short || {}
+    );
+
+    const order = units.slice().sort((a, b) => {
+      const lenA = unitPathLength(handlesById && handlesById.get(a.id));
+      const lenB = unitPathLength(handlesById && handlesById.get(b.id));
+      if (Math.abs(lenA - lenB) > 1e-3) return lenB - lenA;
+      return rng() - 0.5;
+    });
+
+    const durations = order.map((unit) => {
+      const isLong = longIds.has(unit.id);
+      const range = isLong
+        ? longPool.durationRange
+        : shortPool.durationRange;
+      return lerp(range[0], range[1], rng());
+    });
+
+    const queuePool = {
+      maxConcurrent: pool.maxConcurrent ?? longPool.maxConcurrent ?? 3,
+      staggerRange: pool.staggerRange ?? longPool.staggerRange,
+      minDuration: Math.min(longPool.minDuration ?? 0.4, shortPool.minDuration ?? 0.4),
+    };
+
+    const { starts, durations: drawDurations } = schedulePoolQueue(
+      order,
+      durations,
+      drawAt,
+      drawUntil,
+      queuePool,
+      rng
+    );
+    enforceDrawWindow(
+      starts,
+      drawDurations,
+      drawAt,
+      drawUntil,
+      queuePool.minDuration ?? 0.4
+    );
+
+    let eraseSchedules = null;
+    if (eraseFrom != null && eraseUntil != null) {
+      const eraseDurationRange = pool.eraseDurationRange || [0.12, 0.35];
+      const eraseDuration = Math.max(
+        0.08,
+        Math.min(
+          pool.eraseDuration ??
+            lerp(eraseDurationRange[0], eraseDurationRange[1], 0.5),
+          eraseUntil - eraseFrom
+        )
+      );
+      eraseSchedules = order.map(() => ({
+        start: eraseFrom,
+        duration: eraseDuration,
+      }));
+    }
+
+    return order.map((unit, i) => {
+      const handle = handlesById && handlesById.get(unit.id);
+      const dir = unitDrawDirection(handle, rng);
+
+      return {
+        unitId: unit.id,
+        draw: {
+          start: starts[i],
+          duration: drawDurations[i],
+          phase: dir.phases.length === 1 ? dir.phases[0] : dir.phases,
+          reverse: dir.reverses.length === 1 ? dir.reverses[0] : dir.reverses,
+          phases: dir.phases,
+          reverses: dir.reverses,
+        },
+        erase: eraseSchedules ? eraseSchedules[i] : null,
+      };
+    });
+  }
+
+  /* ----------------------------------------------------------
+     STRATEGY: instant
+     Every unit appears or vanishes on cue — no pen build.
+     ---------------------------------------------------------- */
+
+  function scheduleInstant(units, layerDef) {
+    const drawAt = layerDef.draw?.at ?? 0;
+    const eraseFrom = layerDef.erase?.from ?? null;
+    const eraseUntil = layerDef.erase?.until ?? null;
+
+    const eraseDuration =
+      eraseFrom != null && eraseUntil != null
+        ? Math.max(0.001, eraseUntil - eraseFrom)
+        : 0.001;
+
+    return units.map((unit) => ({
+      unitId: unit.id,
+      draw: { start: drawAt, duration: 0.001, phase: 0 },
+      erase:
+        eraseFrom != null && eraseUntil != null
+          ? { start: eraseFrom, duration: eraseDuration }
+          : null,
+    }));
+  }
+
   const STRATEGIES = {
     "organic-pool": scheduleOrganicPool,
     "edge-stagger": scheduleEdgeStagger,
@@ -801,10 +1086,93 @@
     "tree-breath": scheduleTreeBreath,
     "road-inward": scheduleRoadInward,
     "burst-settle": scheduleBurstSettle,
+    "long-first": scheduleLongFirst,
+    "short-first": scheduleShortFirst,
+    "long-then-short": scheduleLongThenShort,
+    instant: scheduleInstant,
   };
 
   function registerStrategy(name, fn) {
     STRATEGIES[name] = fn;
+  }
+
+  function scoreLayerId(entry) {
+    return entry.id || String(entry.file || "").replace(/\.[^.]+$/, "");
+  }
+
+  function findScoreLayer(score, layerId) {
+    return (score.layers || []).find((entry) => scoreLayerId(entry) === layerId);
+  }
+
+  /**
+   * Split units into long / short buckets by path length share.
+   * Matches the long-line classification used in draw-speed modulation.
+   */
+  function classifyUnitsByLength(units, share) {
+    const PathUtils = global.PlotterPathUtils;
+    const measure =
+      PathUtils && PathUtils.measureUnitNodesLength
+        ? PathUtils.measureUnitNodesLength.bind(PathUtils)
+        : () => 0;
+
+    const ranked = units
+      .map((unit) => ({
+        id: unit.id,
+        len: measure(unit.nodes),
+      }))
+      .filter((entry) => entry.len > 0)
+      .sort((a, b) => b.len - a.len);
+
+    const longIds = new Set();
+    const shortIds = new Set();
+
+    if (!ranked.length) {
+      for (const unit of units) shortIds.add(unit.id);
+      return { longIds, shortIds };
+    }
+
+    const lineShare = share ?? 0.32;
+    const count = Math.max(1, Math.ceil(ranked.length * lineShare));
+    const threshold = ranked[Math.min(count, ranked.length) - 1].len;
+
+    for (const entry of ranked) {
+      if (entry.len >= threshold) longIds.add(entry.id);
+      else shortIds.add(entry.id);
+    }
+
+    for (const unit of units) {
+      if (!longIds.has(unit.id) && !shortIds.has(unit.id)) {
+        shortIds.add(unit.id);
+      }
+    }
+
+    return { longIds, shortIds };
+  }
+
+  /**
+   * Restrict each scene layer to the unit subset declared in the score.
+   * Supports splitting one SVG into multiple timed phases (e.g. short vs long paths).
+   */
+  function applyUnitFilters(scene, score) {
+    const lengthClassesByFile = new Map();
+
+    for (const layer of scene.layers) {
+      const layerDef = findScoreLayer(score, layer.id);
+      const filter = layerDef && layerDef.unitFilter;
+      if (!filter) continue;
+
+      const share = layerDef.longLineShare ?? 0.32;
+      if (!lengthClassesByFile.has(layer.file)) {
+        lengthClassesByFile.set(
+          layer.file,
+          classifyUnitsByLength(layer.units, share)
+        );
+      }
+
+      const { longIds, shortIds } = lengthClassesByFile.get(layer.file);
+      const keepIds = filter === "long" ? longIds : shortIds;
+      layer.units = layer.units.filter((unit) => keepIds.has(unit.id));
+    }
   }
 
   /**
@@ -815,12 +1183,7 @@
     const byLayer = new Map();
 
     for (const layer of scene.layers) {
-      const layerDef =
-        (score.layers || []).find((entry) => {
-          const id =
-            entry.id || String(entry.file || "").replace(/\.[^.]+$/, "");
-          return id === layer.id;
-        }) || {};
+      const layerDef = findScoreLayer(score, layer.id) || {};
 
       const strategyName = layerDef.strategy || "parallel";
       const fn = STRATEGIES[strategyName];
@@ -847,6 +1210,10 @@
 
   global.PlotterScheduler = {
     buildSchedules,
+    applyUnitFilters,
+    classifyUnitsByLength,
+    findScoreLayer,
+    scoreLayerId,
     unitProgressAt,
     unitStateAt,
     registerStrategy,

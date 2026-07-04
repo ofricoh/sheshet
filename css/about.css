@@ -2,11 +2,18 @@
 /* ABOUT PAGE */
 /* -------------------- */
 
+:root {
+  /* Band diagram — stage coordinates (1920 × 1080 artboard) */
+  --band-left: 540px;
+  --band-top: 279px;
+  --band-width: 840px;
+}
+
 .band-wrapper{
-    position:fixed;
-    left:28.11%;
-    top:25.87%;
-    width:43.77%;
+    position:absolute;
+    left:var(--band-left);
+    top:var(--band-top);
+    width:var(--band-width);
     z-index:15;
 }
 

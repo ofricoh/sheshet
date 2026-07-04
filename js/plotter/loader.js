@@ -82,7 +82,8 @@
    * Walk the root's direct children and group them into Units.
    * First-level <g> → one Unit. Loose geometry → its own Unit.
    */
-  function extractUnits(svgRoot) {
+  function extractUnits(svgRoot, options) {
+    const minLength = options && options.geometryMinLength;
     const units = [];
 
     for (const child of Array.from(svgRoot.children)) {
@@ -90,10 +91,10 @@
       if (IGNORED_TAGS.has(tag)) continue;
 
       if (tag === "g") {
-        const nodes = collectGeometry(child);
+        const nodes = collectGeometry(child, minLength);
         if (!nodes.length) continue;
         units.push({ id: unitName(child, units.length), nodes });
-      } else if (GEOMETRY_TAGS.has(tag)) {
+      } else if (keepGeometry(child, minLength)) {
         units.push({
           id: unitName(child, units.length),
           nodes: [child.cloneNode(true)],
@@ -104,8 +105,21 @@
     return units;
   }
 
+  function isDrawableGeometry(el, minLength) {
+    const PathUtils = global.PlotterPathUtils;
+    if (PathUtils && typeof PathUtils.isDrawableGeometry === "function") {
+      return PathUtils.isDrawableGeometry(el, minLength);
+    }
+    return true;
+  }
+
+  function keepGeometry(node, minLength) {
+    if (!GEOMETRY_TAGS.has(tagOf(node))) return false;
+    return isDrawableGeometry(node, minLength);
+  }
+
   /** Deep-collect every drawable shape inside a unit group. */
-  function collectGeometry(groupEl) {
+  function collectGeometry(groupEl, minLength) {
     const out = [];
     const walk = (el) => {
       for (const node of Array.from(el.children)) {
@@ -113,13 +127,39 @@
         if (IGNORED_TAGS.has(tag)) continue;
         if (tag === "g") {
           walk(node);
-        } else if (GEOMETRY_TAGS.has(tag)) {
+        } else if (keepGeometry(node, minLength)) {
           out.push(node.cloneNode(true));
         }
       }
     };
     walk(groupEl);
     return out;
+  }
+
+  function warnViewBoxMismatch(layer, entry, artboard, Scene) {
+    const filename = entry.file || layer.file || layer.id;
+    const expected = Scene.viewBoxToString(artboard);
+    const actual = Scene.viewBoxToString(layer.viewBox);
+    const allowed = !!entry.allowViewBoxMismatch;
+
+    if (allowed) {
+      console.warn(
+        `[loader] viewBox mismatch — layer LOADED (allowViewBoxMismatch enabled)\n` +
+          `  file:     ${filename}\n` +
+          `  expected: ${expected}\n` +
+          `  actual:   ${actual}\n` +
+          `  → Layer is included, but artwork may be misaligned. Re-export on the song artboard when possible.`
+      );
+      return;
+    }
+
+    console.warn(
+      `[loader] viewBox mismatch — layer SKIPPED\n` +
+        `  file:     ${filename}\n` +
+        `  expected: ${expected}\n` +
+        `  actual:   ${actual}\n` +
+        `  → Nothing from this file will appear during playback. Re-export on the song artboard, or set allowViewBoxMismatch: true in the score.`
+    );
   }
 
   /**
@@ -146,7 +186,15 @@
           }
           const id =
             (entry.id && entry.id.trim()) || fileStem(entry.file);
-          return { id, file: entry.file, url, viewBox, units: extractUnits(root) };
+          return {
+            id,
+            file: entry.file,
+            url,
+            viewBox,
+            units: extractUnits(root, {
+              geometryMinLength: entry.geometryMinLength,
+            }),
+          };
         } catch (err) {
           console.warn(
             `[loader] skipping layer "${entry.file}" (${url}): ${err.message}`
@@ -166,14 +214,18 @@
 
     const scene = Scene.createScene(artboard);
     for (const layer of loaded) {
+      const entry =
+        layerList.find(
+          (item) =>
+            (item.id && item.id === layer.id) ||
+            fileStem(item.file) === layer.id
+        ) || {};
+
       if (!Scene.sameViewBox(layer.viewBox, artboard)) {
-        console.warn(
-          `[loader] layer "${layer.id}" viewBox ` +
-            `${Scene.viewBoxToString(layer.viewBox)} ≠ artboard ` +
-            `${Scene.viewBoxToString(artboard)} — skipped to keep ` +
-            `the composition aligned. Re-export it on the full artboard.`
-        );
-        continue;
+        warnViewBoxMismatch(layer, entry, artboard, Scene);
+        if (!entry.allowViewBoxMismatch) {
+          continue;
+        }
       }
       scene.layers.push({
         id: layer.id,

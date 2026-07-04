@@ -51,6 +51,12 @@
     return new Array(count).fill(fallback);
   }
 
+  /** Fully conceal a segment. Wrap mode uses dash "0, len" which round caps render as dots. */
+  function hideSegment(s) {
+    s.el.style.strokeDasharray = String(s.len);
+    s.el.style.strokeDashoffset = String(s.len);
+  }
+
   /**
    * @param {object|Element|Element[]} target
    * @param {object} [options]
@@ -60,9 +66,10 @@
    */
   function create(target, options) {
     const opts = Object.assign(
-      { initialProgress: 0, phase: 0, reverse: false },
+      { initialProgress: 0, phase: 0, reverse: false, renderMode: "stroke" },
       options
     );
+    const fillMode = opts.renderMode === "fill";
 
     const elements = resolveElements(target);
     const phaseList = normalizeList(opts.phases ?? opts.phase, elements.length, 0);
@@ -73,6 +80,7 @@
     );
 
     const segments = [];
+    const drawable = new Set();
 
     for (let i = 0; i < elements.length; i++) {
       const el = elements[i];
@@ -86,9 +94,6 @@
       }
       if (!(len > 0)) continue;
 
-      el.style.strokeDasharray = String(len);
-      el.style.strokeDashoffset = String(len);
-
       const phase = clamp01(phaseList[i] ?? 0);
       const reverse = Boolean(reverseList[i]);
 
@@ -100,6 +105,12 @@
         // wrap = random start on a closed outline (circles)
         wrap: phase > 0 && !reverse,
       });
+      drawable.add(el);
+    }
+
+    for (const el of elements) {
+      if (drawable.has(el)) continue;
+      el.style.visibility = "hidden";
     }
 
     const drawer = {
@@ -114,11 +125,26 @@
        */
       draw(progress, opts) {
         const p = clamp01(progress);
+
+        if (fillMode) {
+          const erasing = opts && opts.phase === "erase";
+          const visible = erasing ? p > 0 : p > 0;
+          for (let i = 0; i < segments.length; i++) {
+            segments[i].el.style.opacity = visible ? "1" : "0";
+          }
+          return p;
+        }
+
         const erasing = opts && opts.phase === "erase";
 
         for (let i = 0; i < segments.length; i++) {
           const s = segments[i];
           const visible = p * s.len;
+
+          if (visible <= 0) {
+            hideSegment(s);
+            continue;
+          }
 
           if (erasing) {
             if (s.wrap) {

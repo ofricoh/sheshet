@@ -27,17 +27,26 @@
       artboard,
     });
 
+    if (global.PlotterScheduler?.applyUnitFilters) {
+      global.PlotterScheduler.applyUnitFilters(scene, score);
+    }
+
     const surfaces = global.PlotterArtboard.mount(container, scene);
     const layerHandles = new Map();
     const allUnits = [];
 
     for (const layer of scene.layers) {
       const svg = surfaces.get(layer.id);
+      const layerDef =
+        (global.PlotterScheduler &&
+          global.PlotterScheduler.findScoreLayer(score, layer.id)) ||
+        {};
       const layerStyle = resolveStyle(style, score, layer.id);
       const unitHandles = global.PlotterRendererSVG.renderLayer(
         svg,
         layer,
-        layerStyle
+        layerStyle,
+        { artboard: scene.artboard, transform: layerDef.transform }
       );
 
       const units = unitHandles.map((handle) => {

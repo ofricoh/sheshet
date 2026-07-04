@@ -1,0 +1,28 @@
+/* ============================================================
+   SAMBA BAREGEL SMOL — song-specific plotter overrides
+   Shared record layout: css/stage.css
+   Layer timelines: js/songs/sambaberegelsmol.js
+   ============================================================ */
+
+:root {
+  --plotter-spin-duration: 210s;
+}
+
+.plotter-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.plotter-canvas-plants {
+  z-index: 1;
+  opacity: 0;
+}
+
+.plotter-canvas-zoetrope {
+  z-index: 2;
+  opacity: 0;
+}

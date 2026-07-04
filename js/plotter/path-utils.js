@@ -160,12 +160,94 @@
     return { phase: 0, reverse: false };
   }
 
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  let measureRoot = null;
+
+  function getMeasureRoot() {
+    if (measureRoot || typeof document === "undefined") return measureRoot;
+    measureRoot = document.createElementNS(SVG_NS, "svg");
+    measureRoot.setAttribute("width", "0");
+    measureRoot.setAttribute("height", "0");
+    measureRoot.style.position = "absolute";
+    measureRoot.style.visibility = "hidden";
+    measureRoot.style.pointerEvents = "none";
+    document.documentElement.appendChild(measureRoot);
+    return measureRoot;
+  }
+
+  /** Measure path length from a raw SVG node (before layer mount). */
+  function measureElementLength(el) {
+    const root = getMeasureRoot();
+    if (!root || !el) return 0;
+
+    const clone = el.cloneNode(true);
+    root.appendChild(clone);
+    let len = 0;
+    try {
+      if (typeof clone.getTotalLength === "function") {
+        len = clone.getTotalLength();
+      }
+    } catch (_) {
+      /* ignore unmeasurable geometry */
+    }
+    root.removeChild(clone);
+    return len;
+  }
+
+  function measureUnitNodesLength(nodes) {
+    let sum = 0;
+    for (const node of nodes || []) {
+      sum += measureElementLength(node);
+    }
+    return sum;
+  }
+
+  /** Minimum path length worth plotting — shorter geometry reads as anchor dots. */
+  const MIN_PLOTTER_LENGTH = 1.5;
+
+  function radialSize(el) {
+    const tag = (el.tagName || "").toLowerCase();
+    if (tag === "circle") {
+      return parseFloat(el.getAttribute("r") || "0") * 2;
+    }
+    if (tag === "ellipse") {
+      const rx = parseFloat(el.getAttribute("rx") || "0");
+      const ry = parseFloat(el.getAttribute("ry") || "0");
+      return Math.max(rx, ry) * 2;
+    }
+    return 0;
+  }
+
+  /**
+   * True when an SVG shape is real pen-plotter ink, not a construction marker.
+   * Filters zero-length paths, point markers, and tiny helper circles.
+   */
+  function isDrawableGeometry(el, minLength) {
+    if (!el) return false;
+
+    const floor =
+      typeof minLength === "number" && minLength > 0
+        ? minLength
+        : MIN_PLOTTER_LENGTH;
+
+    const tag = (el.tagName || "").toLowerCase();
+    if (tag === "circle" || tag === "ellipse") {
+      return radialSize(el) >= floor;
+    }
+
+    return measureElementLength(el) >= floor;
+  }
+
   global.PlotterPathUtils = {
     phaseAtEdge,
     classifyOrientation,
     fieldStartPhase,
     unitFieldPhase,
     outerInwardDirection,
+    measureElementLength,
+    measureUnitNodesLength,
+    isDrawableGeometry,
+    MIN_PLOTTER_LENGTH,
     clamp01,
   };
 })(window);

@@ -38,6 +38,15 @@
     if (modulation) modulation.apply(t);
   }
 
+  function applyLayerSurfaceStyles(score, layerHandles, style) {
+    for (const lh of layerHandles.values()) {
+      const layerStyle = resolveStyle(style, score, lh.id);
+      if (layerStyle.mixBlendMode) {
+        lh.svg.style.mixBlendMode = layerStyle.mixBlendMode;
+      }
+    }
+  }
+
   /**
    * Boot a full plotter composition.
    *
@@ -72,16 +81,25 @@
       scene.layers.map((l) => l.id).join(", ")
     );
 
+    if (global.PlotterScheduler?.applyUnitFilters) {
+      global.PlotterScheduler.applyUnitFilters(scene, score);
+    }
+
     const surfaces = global.PlotterArtboard.mount(container, scene);
     const layerHandles = new Map();
 
     for (const layer of scene.layers) {
       const svg = surfaces.get(layer.id);
+      const layerDef =
+        (global.PlotterScheduler &&
+          global.PlotterScheduler.findScoreLayer(score, layer.id)) ||
+        {};
       const layerStyle = resolveStyle(style, score, layer.id);
       const unitHandles = global.PlotterRendererSVG.renderLayer(
         svg,
         layer,
-        layerStyle
+        layerStyle,
+        { artboard: scene.artboard, transform: layerDef.transform }
       );
 
       layerHandles.set(layer.id, {
@@ -95,6 +113,8 @@
       });
     }
 
+    applyLayerSurfaceStyles(score, layerHandles, style);
+
     const schedules = global.PlotterScheduler.buildSchedules(
       scene,
       score,
@@ -104,6 +124,11 @@
 
     for (const lh of layerHandles.values()) {
       const schedMap = schedules.get(lh.id) || new Map();
+      const layerDef =
+        (global.PlotterScheduler &&
+          global.PlotterScheduler.findScoreLayer(score, lh.id)) ||
+        {};
+      const layerStyle = resolveStyle(style, score, lh.id);
       for (const unit of lh.units) {
         const sched = schedMap.get(unit.id);
         const draw = (sched && sched.draw) || {};
@@ -111,6 +136,7 @@
           phase: draw.phases ?? draw.phase ?? 0,
           reverse: draw.reverses ?? draw.reverse ?? false,
           initialProgress: 0,
+          renderMode: layerStyle.renderMode || "stroke",
         });
       }
     }

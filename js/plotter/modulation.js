@@ -2,9 +2,11 @@
    PLOTTER MACHINE — MODULATION
    ------------------------------------------------------------
    Layer-level audio reactions:
-     • tremble   — anchored vibration (flute)
-     • flicker   — brief pen unplot on completed shapes (guitar)
-     • eraseCue  — audio-triggered fast layer erase (guitar)
+     • tremble    — anchored vibration (flute)
+     • drawSpeed  — audio-driven draw rate for long paths
+     • inkBreath  — subtle draw-progress pulse on completed ink
+     • flicker    — brief pen unplot on completed shapes (guitar)
+     • eraseCue   — audio-triggered fast layer erase (guitar)
    ============================================================ */
 
 (function (global) {
@@ -44,6 +46,88 @@
     return samples;
   }
 
+  /** Drive level for audio-synced draw speed on long paths. */
+  function resolveDrawSpeedLevel(stem, cfg) {
+    if (!stem) return cfg?.neutral ?? 0.5;
+
+    const energy = cfg?.energy ?? 1;
+    const weight = cfg?.dynamicsWeight ?? 0.62;
+
+    if (stem.live != null && stem.dynamics != null) {
+      return clamp01((stem.live * (1 - weight) + stem.dynamics * weight) * energy);
+    }
+    if (stem.dynamics != null) {
+      return clamp01(stem.dynamics * energy);
+    }
+    if (stem.live != null) {
+      return clamp01(stem.live * energy);
+    }
+
+    return clamp01(resolveTrembleLevel(stem) * energy);
+  }
+
+  function classifyLongUnits(lh, cfg) {
+    const ranked = lh.units
+      .map((unit) => ({
+        id: unit.id,
+        len: unit.drawer?.totalLength ?? 0,
+      }))
+      .filter((entry) => entry.len > 0)
+      .sort((a, b) => b.len - a.len);
+
+    if (!ranked.length) return new Set();
+
+    const share = cfg?.longLineShare ?? 0.32;
+    const count = Math.max(1, Math.ceil(ranked.length * share));
+    const threshold = ranked[Math.min(count, ranked.length) - 1].len;
+    const longUnits = new Set();
+
+    for (const entry of ranked) {
+      if (entry.len >= threshold) longUnits.add(entry.id);
+    }
+
+    return longUnits;
+  }
+
+  function updateDrawSpeed(state, sched, t, level, cfg) {
+    const draw = sched.draw;
+    if (!draw || t < draw.start) {
+      state.lastT = t;
+      state.progress = 0;
+      state.smoothLevel = level;
+      return null;
+    }
+
+    const erase = sched.erase;
+    if (erase && t >= erase.start) return null;
+
+    if (t >= draw.start + draw.duration && state.progress >= 1) {
+      state.lastT = t;
+      state.progress = 1;
+      return 1;
+    }
+
+    const dt = t - state.lastT;
+    if (state.lastT < 0 || dt < 0 || dt > 0.25) {
+      state.progress = clamp01((t - draw.start) / Math.max(draw.duration, 1e-6));
+      state.lastT = t;
+      state.smoothLevel = level;
+      return state.progress;
+    }
+
+    const follow = cfg?.follow ?? 0.16;
+    state.smoothLevel += (level - state.smoothLevel) * follow;
+
+    const slowMult = cfg?.slowMult ?? 0.42;
+    const fastMult = cfg?.fastMult ?? 2.35;
+    const speedMult = lerp(slowMult, fastMult, state.smoothLevel);
+
+    state.progress += (dt / Math.max(draw.duration, 1e-6)) * speedMult;
+    state.progress = clamp01(state.progress);
+    state.lastT = t;
+    return state.progress;
+  }
+
   /** Responsive drive level for tremble modulation. */
   function resolveTrembleLevel(stem) {
     if (!stem) return 0;
@@ -59,6 +143,101 @@
     return (
       stem.resonance ?? stem.spectral ?? stem.flute ?? stem.envelope ?? 0
     );
+  }
+
+  /** Subtle drive for ink-breath depth and tempo — intentionally restrained. */
+  function resolveInkBreathLevel(stem, cfg) {
+    if (!stem) return cfg?.neutral ?? 0.5;
+
+    const energy = cfg?.energy ?? 0.32;
+    const weight = cfg?.dynamicsWeight ?? 0.45;
+    const neutral = cfg?.neutral ?? 0.5;
+
+    let level = neutral;
+    if (stem.live != null && stem.dynamics != null) {
+      level = stem.live * (1 - weight) + stem.dynamics * weight;
+    } else if (stem.dynamics != null) {
+      level = stem.dynamics;
+    } else if (stem.live != null) {
+      level = stem.live;
+    } else {
+      level = resolveTrembleLevel(stem);
+    }
+
+    return clamp01(neutral + (clamp01(level) - neutral) * energy);
+  }
+
+  /** Smooth ramp from idle background motion to full waveform intensity. */
+  function resolveInkBreathIntensity(t, cfg) {
+    const from = cfg.from ?? 0;
+    const until = cfg.until ?? Infinity;
+    if (t < from || t >= until) return 0;
+
+    const idle = cfg.intensityIdle ?? 0.2;
+    const rampFrom = cfg.rampFrom ?? cfg.buildFrom ?? from;
+    const rampUntil = cfg.rampUntil ?? cfg.buildUntil ?? rampFrom + 4;
+
+    if (t <= rampFrom) return idle;
+    if (t >= rampUntil) return 1;
+
+    const u = clamp01((t - rampFrom) / Math.max(0.001, rampUntil - rampFrom));
+    const eased = u * u * (3 - 2 * u);
+    return lerp(idle, 1, eased);
+  }
+
+  function inkBreathWave(t, unitId, speed, cfg) {
+    const seed = hashUnitId(unitId);
+    const phase = seededRand(seed) * Math.PI * 2;
+    const spatial = seededRand(seed + 41.2) * Math.PI * 2;
+    const travel = cfg.travel ?? 1.4;
+    const spread = cfg.freqSpread ?? 0.16;
+
+    const f1 = (cfg.freq1 ?? 0.32) + seededRand(seed + 3.1) * spread;
+    const f2 = (cfg.freq2 ?? 0.48) + seededRand(seed + 11.4) * spread * 0.82;
+    const f3 = (cfg.freq3 ?? 0.26) + seededRand(seed + 23.8) * spread * 0.64;
+
+    const wave =
+      Math.sin(t * speed * f1 * Math.PI * 2 + phase - spatial * travel) *
+        0.52 +
+      Math.sin(
+        t * speed * f2 * Math.PI * 2 + phase * 1.37 - spatial * travel * 1.18
+      ) *
+        0.28 +
+      Math.sin(
+        t * speed * f3 * Math.PI * 2 + phase * 0.83 - spatial * travel * 0.86
+      ) *
+        0.2;
+
+    return clamp01(0.5 + 0.5 * wave);
+  }
+
+  /**
+   * Oscillate visible ink length via draw progress (not transforms).
+   * Returns a progress 0..1; intensity scales idle → active over time.
+   */
+  function inkBreathProgress(t, unitId, audioLevel, intensity, cfg) {
+    const idleDepth = cfg.depthRangeIdle || [0.012, 0.028];
+    const activeDepth = cfg.depthRange || [0.055, 0.095];
+    const depthMin = lerp(idleDepth[0], activeDepth[0], intensity);
+    const depthMax = lerp(idleDepth[1], activeDepth[1], intensity);
+    const depth = lerp(depthMin, depthMax, audioLevel);
+
+    const speedIdle = cfg.speedIdle ?? 0.52;
+    const speedFull = cfg.speed ?? cfg.speedFull ?? 1.7;
+    const speed =
+      lerp(speedIdle, speedFull, intensity) * lerp(0.92, 1.08, audioLevel);
+
+    const wave = inkBreathWave(t, unitId, speed, cfg);
+    return { wave, depth };
+  }
+
+  function applyInkBreathProgress(baseProgress, wave, depth) {
+    if (baseProgress >= 0.999) {
+      return clamp01(1 - depth * wave);
+    }
+
+    const scale = 0.35 + baseProgress * 0.55;
+    return clamp01(baseProgress * (1 - depth * wave * scale));
   }
 
   function strokeVibration(t, pathIndex, audioLevel, cfg) {
@@ -236,8 +415,18 @@
 
     const flickerStates = new Map();
     const eraseCueStates = new Map();
+    const drawSpeedStates = new Map();
+    const longUnitsByLayer = new Map();
     let audioSample = null;
     const drawOverrides = new Map();
+
+    for (const [layerId, mod] of layerDefs) {
+      if (!mod.drawSpeed) continue;
+      const lh = layerHandles.get(layerId);
+      if (lh) {
+        longUnitsByLayer.set(layerId, classifyLongUnits(lh, mod.drawSpeed));
+      }
+    }
 
     function ensureFlicker(layerId) {
       if (!flickerStates.has(layerId)) {
@@ -251,6 +440,17 @@
         eraseCueStates.set(layerId, createEraseCueState());
       }
       return eraseCueStates.get(layerId);
+    }
+
+    function ensureDrawSpeedUnit(layerId, unitId) {
+      if (!drawSpeedStates.has(layerId)) {
+        drawSpeedStates.set(layerId, new Map());
+      }
+      const layerMap = drawSpeedStates.get(layerId);
+      if (!layerMap.has(unitId)) {
+        layerMap.set(unitId, { lastT: -1, progress: 0, smoothLevel: 0.5 });
+      }
+      return layerMap.get(unitId);
     }
 
     function buildDrawOverrides(t) {
@@ -307,6 +507,73 @@
               drawOverrides.set(unitKey(layerId, unit.id), {
                 progress: 1 - e,
                 phase: "erase",
+              });
+            }
+          }
+        }
+
+        const speedCfg = mod.drawSpeed;
+        if (speedCfg) {
+          const activeFrom = speedCfg.from ?? 0;
+          const activeUntil = speedCfg.until ?? Infinity;
+          if (t < activeFrom || t > activeUntil) continue;
+
+          const longUnits = longUnitsByLayer.get(layerId);
+          if (!longUnits || !longUnits.size) continue;
+
+          const stem = resolveStemAudio(samples, speedCfg.source ?? "flute");
+          const level = resolveDrawSpeedLevel(stem, speedCfg);
+
+          for (const unit of lh.units) {
+            if (!longUnits.has(unit.id)) continue;
+
+            const sched = schedMap.get(unit.id);
+            if (!sched) continue;
+
+            const base = global.PlotterScheduler.unitStateAt(sched, t);
+            if (base.phase === "erase") continue;
+
+            const state = ensureDrawSpeedUnit(layerId, unit.id);
+            const progress = updateDrawSpeed(state, sched, t, level, speedCfg);
+            if (progress == null) continue;
+
+            drawOverrides.set(unitKey(layerId, unit.id), {
+              progress,
+              phase: progress >= 1 ? "draw" : base.phase,
+            });
+          }
+        }
+
+        const breathCfg = mod.inkBreath;
+        if (breathCfg) {
+          const activeFrom = breathCfg.from ?? 0;
+          const activeUntil = breathCfg.until ?? Infinity;
+          if (t >= activeFrom && t < activeUntil) {
+            const stem = resolveStemAudio(samples, breathCfg.source ?? "drums");
+            const audioLevel = resolveInkBreathLevel(stem, breathCfg);
+            const intensity = resolveInkBreathIntensity(t, breathCfg);
+
+            for (const unit of lh.units) {
+              const key = unitKey(layerId, unit.id);
+              if (drawOverrides.has(key)) continue;
+
+              const sched = schedMap.get(unit.id);
+              if (!sched) continue;
+
+              const base = global.PlotterScheduler.unitStateAt(sched, t);
+              if (base.phase === "erase" || base.progress <= 0.001) continue;
+
+              const { wave, depth } = inkBreathProgress(
+                t,
+                unit.id,
+                audioLevel,
+                intensity,
+                breathCfg
+              );
+
+              drawOverrides.set(key, {
+                progress: applyInkBreathProgress(base.progress, wave, depth),
+                phase: "draw",
               });
             }
           }

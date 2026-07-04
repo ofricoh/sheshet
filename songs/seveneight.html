@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="he">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ששת | 7/8</title>
+
+<link rel="stylesheet" href="../css/stage.css">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/songs/seveneight.css">
+
+</head>
+
+<body class="plotter-page">
+
+  <div class="grid-layer">
+    <svg class="grid-svg"></svg>
+  </div>
+
+  <div class="site-stage">
+
+  <!-- Layer order: record base (bottom) -> engravings -> label (top) -->
+  <div class="plotter-viewport">
+    <div class="plotter-spin-group" id="plotterSpinGroup">
+
+      <div class="plotter-disc" id="plotterRecord"></div>
+
+      <div class="plotter-mount" id="plotterMount"></div>
+
+      <div class="plotter-label-layer" id="plotterLabelLayer">
+        <div class="plotter-label" id="plotterLabel">
+          <img
+            class="plotter-label-svg"
+            src="../assets/svg/songs/seveneight/seveneight.svg"
+            alt=""
+          >
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Minimal transport -->
+  <div class="plotter-controls">
+    <button id="playBtn" class="plotter-btn">Play</button>
+    <button id="pauseBtn" class="plotter-btn">Pause</button>
+  </div>
+
+  <div class="plotter-timeline-wrap">
+    <input
+      id="timeline"
+      class="plotter-timeline"
+      type="range"
+      min="0"
+      max="1000"
+      value="0"
+      step="1"
+      aria-label="timeline"
+    >
+  </div>
+
+  </div><!-- .site-stage -->
+
+  <audio
+    id="seveneightAudio"
+    src="../audio/songs/seveneight/seveneight.mp3"
+    preload="metadata"
+  ></audio>
+
+  <script src="../js/stage.js"></script>
+  <script src="../js/listened-tracks.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/plotter/transport.js"></script>
+  <script src="../js/plotter/debug-timecode.js"></script>
+  <script src="../js/songs/seveneight.js"></script>
+
+</body>
+
+</html>

@@ -33,9 +33,21 @@
    * @param {object} [style]     stroke style overrides
    * @returns {Array} unit handles { id, group, paths }
    */
-  function renderLayer(svg, layer, style) {
+  function renderLayer(svg, layer, style, opts) {
     const cfg = Object.assign({}, DEFAULT_STYLE, style);
     const handles = [];
+    const mountOpts = opts || {};
+    const { artboard, transform } = mountOpts;
+
+    let parent = svg;
+    if (transform && transform.rotate != null && artboard) {
+      const wrap = document.createElementNS(SVG_NS, "g");
+      const cx = artboard.x + artboard.w / 2;
+      const cy = artboard.y + artboard.h / 2;
+      wrap.setAttribute("transform", `rotate(${transform.rotate} ${cx} ${cy})`);
+      svg.appendChild(wrap);
+      parent = wrap;
+    }
 
     for (const unit of layer.units) {
       const group = document.createElementNS(SVG_NS, "g");
@@ -51,7 +63,7 @@
         paths.push(el);
       }
 
-      svg.appendChild(group);
+      parent.appendChild(group);
       handles.push({ id: unit.id, group, paths });
     }
 
@@ -59,6 +71,13 @@
   }
 
   function applyStroke(el, cfg) {
+    if (cfg.renderMode === "fill") {
+      el.setAttribute("fill", cfg.fill || cfg.stroke || DEFAULT_STYLE.stroke);
+      el.setAttribute("stroke", "none");
+      el.style.opacity = "0";
+      return;
+    }
+
     // Pen plotter draws lines, not fills.
     el.setAttribute("fill", "none");
     el.setAttribute("stroke", cfg.stroke);
@@ -72,5 +91,5 @@
     // which is uniform across all layers.
   }
 
-  global.PlotterRendererSVG = { renderLayer, DEFAULT_STYLE };
+  global.PlotterRendererSVG = { renderLayer, DEFAULT_STYLE, applyStroke };
 })(window);

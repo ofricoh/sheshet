@@ -40,12 +40,7 @@
   box-sizing: border-box;
 }
 
-html,
-body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
+/* Viewport sizing + stage centering: css/stage.css */
 
 :root {
   --color-white: #FAFAFA;
@@ -77,6 +72,7 @@ body {
   font-family: "SimplerMono", monospace;
 }
 
+/* Viewport-filling background grid — outside .site-stage, does not scale with stage */
 .grid-layer {
   position: fixed;
   inset: 0;
@@ -102,7 +98,7 @@ body {
 
 .footer-sticker-left,
 .footer-sticker-right{
-position:fixed;
+position:absolute;
 z-index:10;
 }
 
@@ -135,7 +131,7 @@ display:block;
 
 .footer-credits{
 
-  position:fixed;
+  position:absolute;
   left:50%;
   bottom:25px;
   transform:translateX(-50%);
@@ -154,7 +150,7 @@ display:block;
 /* -------------------- */
 
 .album-title{
-  position:fixed;
+  position:absolute;
   inset:0;
   z-index:20;
   pointer-events:none;
@@ -229,7 +225,7 @@ display:block;
 
 .songs-side-a,
 .songs-side-b{
-position:fixed;
+position:absolute;
 inset:0;
 z-index:15;
 pointer-events:none;
@@ -609,13 +605,13 @@ visibility:visible;
 
 .intro-screen{
 
-  position:fixed;
+  position:absolute;
 
   left:50%;
   top:50%;
 
-  width:180vmax;
-  height:180vmax;
+  width:var(--intro-circle-size);
+  height:var(--intro-circle-size);
 
   transform:translate(-50%,-50%);
 

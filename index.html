@@ -7,6 +7,7 @@
 
   <title>ששת</title>
 
+  <link rel="stylesheet" href="css/stage.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/home-tracks.css">
 
@@ -18,6 +19,12 @@
 </head>
 
 <body class="intro-active home-mode">
+
+  <div class="grid-layer">
+    <svg class="grid-svg"></svg>
+  </div>
+
+  <div class="site-stage">
 
   <div class="intro-screen">
 
@@ -37,10 +44,6 @@
   
     </div>
   
-  </div>
-
-  <div class="grid-layer">
-    <svg class="grid-svg"></svg>
   </div>
 
   <!-- TITLE -->
@@ -112,7 +115,7 @@
     <div class="song-credits">לחן: שם טוב לוי</div>
   </div>
 
-  <div class="song track-a3">
+  <a href="songs/sambaberegelsmol.html" class="song track-a3">
     <div class="song-dot">3</div>
     <div class="song-name">סמבה ברגל שמאל</div>
     <span class="song-en">All Thumbs Samba</span>
@@ -121,15 +124,15 @@
       מילים: יעקב גלעד<br>
       לחן: יהודית רביץ
     </div>
-  </div>
+  </a>
 
-  <div class="song track-a4 is-instrumental">
+  <a href="songs/seveneight.html" class="song track-a4 is-instrumental">
     <div class="song-dot">4</div>
     <div class="song-name">7/8</div>
     <span class="song-en">seven–eight</span>
     <div class="song-duration">(4:09)</div>
     <div class="song-credits">לחן: שם טוב לוי</div>
-  </div>
+  </a>
 
   <div class="song track-a5">
     <div class="song-dot">5</div>
@@ -205,6 +208,8 @@
     CBS are Trademarks of CBS Inc / ℗&© 1977 CBS, Inc / Manufactured and distributed by CBS Records Ltd. P.O.B 681, Tel Aviv, Israel / מיוצר ומופץ ע״י תקליטי סי בי אס בע״מ ת.ד 681 תל אביב / תוצרת ישראל
   </div>
 
+  </div><!-- .site-stage -->
+
   <script>
 
     const isReload =
@@ -240,6 +245,7 @@
     
     </script>
 
+  <script src="js/stage.js"></script>
   <script src="js/listened-tracks.js"></script>
   <script src="js/home-album.js"></script>
   <script src="js/lyrics-transition.js"></script>

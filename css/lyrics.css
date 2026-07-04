@@ -1,5 +1,10 @@
+/* ============================================================
+   LYRICS PAGE
+   All positions are stage coordinates (1920 × 1080 artboard).
+   ============================================================ */
+
 .lyrics-page{
-  position:fixed;
+  position:absolute;
   inset:0;
   z-index:15;
   pointer-events:auto;

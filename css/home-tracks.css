@@ -2,6 +2,7 @@
    HOMEPAGE TRACKLIST — home-tracks.css
    Loaded on index.html only.
    Dual-column layout: Side B (left) · Side A (right)
+   All positions are stage coordinates (1920 × 1080 artboard).
    ============================================================ */
 
 
@@ -29,14 +30,14 @@
 }
 
 .side-label-a {
-  position: fixed;
+  position: absolute;
   top: var(--side-label-a-top);
   right: var(--side-label-a-right);
   left: var(--side-label-a-left);
 }
 
 .side-label-b {
-  position: fixed;
+  position: absolute;
   top: var(--side-label-b-top);
   left: var(--side-label-b-left);
   right: var(--side-label-b-right);
