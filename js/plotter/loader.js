@@ -175,8 +175,10 @@
     const { baseDir, layers: layerList, artboard: declared } = options;
     const Scene = global.PlotterScene;
 
+    const toLoad = (layerList || []).filter((entry) => !entry.placeholder);
+
     const results = await Promise.all(
-      layerList.map(async (entry) => {
+      toLoad.map(async (entry) => {
         const url = joinPath(baseDir, entry.file);
         try {
           const root = await fetchSvgRoot(url);
@@ -206,7 +208,10 @@
 
     const loaded = results.filter(Boolean);
     if (!loaded.length) {
-      throw new Error("[loader] no layers could be loaded");
+      if (!declared) {
+        throw new Error("[loader] no layers could be loaded");
+      }
+      return Scene.createScene(declared);
     }
 
     // The artboard is whatever the artwork declares — never hardcoded.

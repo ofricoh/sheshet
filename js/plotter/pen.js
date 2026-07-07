@@ -176,6 +176,27 @@
 
         return p;
       },
+
+      /** Update wrap/reverse origins between living-cycle passes. */
+      setDirection(options) {
+        const phaseList = normalizeList(
+          options.phases ?? options.phase,
+          segments.length,
+          0
+        );
+        const reverseList = normalizeList(
+          options.reverses ?? options.reverse,
+          segments.length,
+          false
+        );
+        for (let i = 0; i < segments.length; i++) {
+          const phase = clamp01(phaseList[i] ?? 0);
+          const reverse = Boolean(reverseList[i]);
+          segments[i].phase = phase;
+          segments[i].reverse = reverse;
+          segments[i].wrap = phase > 0 && !reverse;
+        }
+      },
     };
 
     drawer.draw(opts.initialProgress);

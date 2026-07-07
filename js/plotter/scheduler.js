@@ -47,8 +47,62 @@
    * Evaluate a Unit's ink progress at song time t.
    * @returns {{ progress: number, phase: "draw"|"erase"|"idle" }}
    */
+  function unitStateAtFromCycles(cycles, t) {
+    let state = { progress: 0, phase: "idle" };
+
+    const sorted = cycles
+      .filter((c) => c.draw || c.erase)
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.draw?.start ?? a.erase.start) - (b.draw?.start ?? b.erase.start)
+      );
+
+    for (const cycle of sorted) {
+      const draw = cycle.draw;
+      const erase = cycle.erase;
+
+      if (draw && t >= draw.start) {
+        if (t < draw.start + draw.duration) {
+          return {
+            progress: clamp01(
+              (t - draw.start) / Math.max(draw.duration, 1e-6)
+            ),
+            phase: "draw",
+            drawDirection: draw,
+          };
+        }
+
+        if (!erase || t < erase.start) {
+          state = { progress: 1, phase: "draw", drawDirection: draw };
+          if (!erase) continue;
+        }
+      }
+
+      if (erase && t >= erase.start) {
+        if (t < erase.start + erase.duration) {
+          const e = clamp01(
+            (t - erase.start) / Math.max(erase.duration, 1e-6)
+          );
+          return {
+            progress: 1 - e,
+            phase: "erase",
+            drawDirection: draw || cycle.draw,
+          };
+        }
+        state = { progress: 0, phase: "idle" };
+      }
+    }
+
+    return state;
+  }
+
   function unitStateAt(schedule, t) {
     if (!schedule) return { progress: 0, phase: "idle" };
+
+    if (schedule.cycles?.length) {
+      return unitStateAtFromCycles(schedule.cycles, t);
+    }
 
     const draw = schedule.draw;
     if (!draw || t < draw.start) return { progress: 0, phase: "idle" };
@@ -147,7 +201,9 @@
       lastFinish = Math.max(lastFinish, starts[i] + durations[i]);
     }
 
-    if (lastFinish > drawUntil) {
+    const naturalPace = pool.naturalPace === true;
+
+    if (!naturalPace && lastFinish > drawUntil) {
       const overflow = lastFinish - drawUntil;
       const scale = drawWindow / (lastFinish - drawAt);
       for (let i = 0; i < order.length; i++) {
@@ -174,6 +230,21 @@
    * Used when the pool minDuration floor would otherwise
    * leave strokes still building past the build window.
    */
+  function layerDrawEndAt(starts, durations, drawAt) {
+    let lastFinish = drawAt;
+    for (let i = 0; i < durations.length; i++) {
+      lastFinish = Math.max(lastFinish, starts[i] + durations[i]);
+    }
+    return lastFinish;
+  }
+
+  function resolveEraseFrom(layerDef, drawUntil, starts, durations, drawAt) {
+    if (layerDef.erase?.followDraw === true) {
+      return layerDrawEndAt(starts, durations, drawAt);
+    }
+    return layerDef.erase?.from ?? drawUntil;
+  }
+
   function enforceDrawWindow(starts, durations, drawAt, drawUntil, floor) {
     const minDuration = floor ?? 0.2;
     const drawWindow = Math.max(0.1, drawUntil - drawAt);
@@ -228,19 +299,39 @@
       return base / speed;
     });
 
+    const naturalPace = layerDef.draw?.naturalPace === true;
     const { starts } = schedulePoolQueue(
       order,
       durations,
       drawAt,
       drawUntil,
-      pool,
+      Object.assign({ naturalPace }, pool),
       rng
     );
 
-    const eraseStarts = order.map(() =>
-      lerp(eraseFrom, eraseUntil - 1.2, rng())
+    const effectiveEraseFrom = resolveEraseFrom(
+      layerDef,
+      drawUntil,
+      starts,
+      durations,
+      drawAt
     );
-    const eraseDurations = order.map(() => lerp(1.4, 4.5, rng()));
+    const eraseDurationRange = pool.eraseDurationRange || [1.4, 4.5];
+    const eraseStarts = layerDef.erase?.followDraw
+      ? order.map(() => effectiveEraseFrom)
+      : order.map(() =>
+          lerp(
+            effectiveEraseFrom,
+            Math.max(
+              effectiveEraseFrom,
+              eraseUntil - eraseDurationRange[1]
+            ),
+            rng()
+          )
+        );
+    const eraseDurations = order.map(() =>
+      lerp(eraseDurationRange[0], eraseDurationRange[1], rng())
+    );
 
     for (let i = 0; i < order.length; i++) {
       if (eraseStarts[i] + eraseDurations[i] > eraseUntil) {
@@ -644,6 +735,126 @@
   }
 
   /* ----------------------------------------------------------
+     STRATEGY: living-cycle
+     Playful draw → hold → erase → redraw loops across a long
+     window. Each pass picks fresh pen directions so the same
+     artwork keeps rediscovering itself.
+     ---------------------------------------------------------- */
+
+  function scheduleLivingCycle(units, layerDef, rng, handlesById) {
+    const drawAt = layerDef.draw?.at ?? 118;
+    const eraseUntil = layerDef.erase?.until ?? 142;
+    const pool = layerDef.pool || {};
+    const activityEnd = eraseUntil - (pool.finalClearSec ?? 2.5);
+    const durationRange = pool.durationRange || [2.0, 4.5];
+    const eraseDurationRange = pool.eraseDurationRange || [1.6, 3.2];
+    const holdRange = pool.holdRange || [0.4, 1.2];
+    const gapRange = pool.gapRange || [0.8, 2.2];
+    const cyclesMin = pool.cyclesPerUnit?.[0] ?? 2;
+    const cyclesMax = pool.cyclesPerUnit?.[1] ?? 3;
+
+    const order = shuffle(units, rng);
+    const unitCycleCount = order.map(() =>
+      Math.round(lerp(cyclesMin, cyclesMax, rng()))
+    );
+    const maxCycles = Math.max(...unitCycleCount, 1);
+
+    const unitSchedules = new Map();
+    for (const unit of order) unitSchedules.set(unit.id, []);
+
+    for (let ci = 0; ci < maxCycles; ci++) {
+      const cycleUnits = order.filter((_, i) => unitCycleCount[i] > ci);
+      if (!cycleUnits.length) continue;
+
+      const span = activityEnd - drawAt;
+      const cycleStart = drawAt + ci * (span / maxCycles) * 0.82;
+      const cycleDrawUntil = Math.min(
+        activityEnd - 3.5,
+        cycleStart + (span / maxCycles) * 1.05
+      );
+
+      const durations = cycleUnits.map(() =>
+        lerp(durationRange[0], durationRange[1], rng())
+      );
+
+      const { starts: drawStarts } = schedulePoolQueue(
+        cycleUnits,
+        durations,
+        cycleStart,
+        cycleDrawUntil,
+        Object.assign(
+          {
+            maxConcurrent: pool.maxConcurrent ?? 4,
+            staggerRange: pool.staggerRange ?? [0.3, 1.0],
+            minDuration: pool.minDuration ?? 1.5,
+          },
+          pool
+        ),
+        rng
+      );
+
+      cycleUnits.forEach((unit, i) => {
+        const handle = handlesById && handlesById.get(unit.id);
+        const drawDur = durations[i];
+        const hold = lerp(holdRange[0], holdRange[1], rng());
+        let eraseDur = lerp(
+          eraseDurationRange[0],
+          eraseDurationRange[1],
+          rng()
+        );
+        const drawStart = drawStarts[i];
+        let eraseStart = drawStart + drawDur + hold;
+
+        if (eraseStart + eraseDur > activityEnd) {
+          eraseDur = Math.max(1.2, activityEnd - eraseStart);
+          if (eraseDur <= 1.2) {
+            eraseStart = Math.max(drawStart + drawDur + 0.2, activityEnd - 1.2);
+            eraseDur = Math.max(1.2, activityEnd - eraseStart);
+          }
+        }
+
+        const dir = unitDrawDirection(handle, rng);
+        unitSchedules.get(unit.id).push({
+          draw: {
+            start: drawStart,
+            duration: drawDur,
+            phase: dir.phases.length === 1 ? dir.phases[0] : dir.phases,
+            reverse: dir.reverses.length === 1 ? dir.reverses[0] : dir.reverses,
+            phases: dir.phases,
+            reverses: dir.reverses,
+          },
+          erase: { start: eraseStart, duration: eraseDur },
+        });
+      });
+    }
+
+    return order.map((unit) => {
+      const cycles = unitSchedules.get(unit.id);
+      cycles.sort((a, b) => a.draw.start - b.draw.start);
+
+      for (let i = 1; i < cycles.length; i++) {
+        const prev = cycles[i - 1];
+        const minStart =
+          prev.erase.start +
+          prev.erase.duration +
+          lerp(gapRange[0], gapRange[1], rng());
+        if (cycles[i].draw.start < minStart) {
+          const shift = minStart - cycles[i].draw.start;
+          cycles[i].draw.start += shift;
+          cycles[i].erase.start += shift;
+        }
+      }
+
+      return {
+        unitId: unit.id,
+        cycles,
+        draw: cycles[0]?.draw,
+        erase: cycles[cycles.length - 1]?.erase,
+      };
+    });
+  }
+
+  /* ----------------------------------------------------------
      STRATEGY: burst-settle
      Energetic multi-pen burst in the first ~second, then a
      gradually slower, calmer build until the window closes.
@@ -758,21 +969,61 @@
     const eraseUntil = layerDef.erase?.until ?? null;
     let eraseSchedules = null;
 
-    if (eraseFrom != null && eraseUntil != null) {
-      const eraseDurationRange = pool.eraseDurationRange || [0.06, 0.1];
-      const eraseDuration = Math.max(
-        0.04,
-        Math.min(
-          pool.eraseDuration ??
-            lerp(eraseDurationRange[0], eraseDurationRange[1], 0.5),
-          eraseUntil - eraseFrom
-        )
-      );
+    if (eraseUntil != null) {
+      if (layerDef.erase?.mirrorDraw === true) {
+        const erasePhaseStart = resolveEraseFrom(
+          layerDef,
+          drawUntil,
+          order.map((unit) => startsById.get(unit.id)),
+          order.map((unit) => durationsById.get(unit.id)),
+          drawAt
+        );
 
-      eraseSchedules = order.map(() => ({
-        start: eraseFrom,
-        duration: eraseDuration,
-      }));
+        eraseSchedules = order.map((unit) => {
+          const start = startsById.get(unit.id);
+          const duration = durationsById.get(unit.id);
+          return {
+            start: erasePhaseStart + (start - drawAt),
+            duration,
+          };
+        });
+
+        let lastFinish = erasePhaseStart;
+        for (let i = 0; i < eraseSchedules.length; i++) {
+          lastFinish = Math.max(
+            lastFinish,
+            eraseSchedules[i].start + eraseSchedules[i].duration
+          );
+        }
+        if (lastFinish > eraseUntil) {
+          const eraseWindow = Math.max(0.1, eraseUntil - erasePhaseStart);
+          const scale = eraseWindow / (lastFinish - erasePhaseStart);
+          for (let i = 0; i < eraseSchedules.length; i++) {
+            eraseSchedules[i].start =
+              erasePhaseStart +
+              (eraseSchedules[i].start - erasePhaseStart) * scale;
+            eraseSchedules[i].duration = Math.max(
+              0.04,
+              eraseSchedules[i].duration * scale
+            );
+          }
+        }
+      } else if (eraseFrom != null) {
+        const eraseDurationRange = pool.eraseDurationRange || [0.06, 0.1];
+        const eraseDuration = Math.max(
+          0.04,
+          Math.min(
+            pool.eraseDuration ??
+              lerp(eraseDurationRange[0], eraseDurationRange[1], 0.5),
+            eraseUntil - eraseFrom
+          )
+        );
+
+        eraseSchedules = order.map(() => ({
+          start: eraseFrom,
+          duration: eraseDuration,
+        }));
+      }
     }
 
     return order.map((unit, i) => {
@@ -841,33 +1092,50 @@
       lerp(durationRange[0], durationRange[1], rng())
     );
 
+    const naturalPace = layerDef.draw?.naturalPace === true;
+
     const { starts, durations: drawDurations } = schedulePoolQueue(
       order,
       durations,
       drawAt,
       drawUntil,
-      pool,
+      Object.assign({ naturalPace }, pool),
       rng
     );
-    enforceDrawWindow(
-      starts,
-      drawDurations,
-      drawAt,
-      drawUntil,
-      pool.minDuration ?? 0.4
-    );
+    if (!naturalPace) {
+      enforceDrawWindow(
+        starts,
+        drawDurations,
+        drawAt,
+        drawUntil,
+        pool.minDuration ?? 0.4
+      );
+    }
 
     let eraseStarts = null;
     let eraseDurations = null;
 
-    if (eraseFrom != null && eraseUntil != null) {
-      const eraseWindow = Math.max(0.1, eraseUntil - eraseFrom);
+    if (eraseUntil != null) {
+      const effectiveEraseFrom = resolveEraseFrom(
+        layerDef,
+        drawUntil,
+        starts,
+        drawDurations,
+        drawAt
+      );
+      const eraseWindow = Math.max(0.1, eraseUntil - effectiveEraseFrom);
       eraseDurations = order.map(() =>
         lerp(eraseDurationRange[0], eraseDurationRange[1], rng())
       );
-      eraseStarts = order.map(() =>
-        lerp(eraseFrom, eraseUntil - eraseDurationRange[1], rng())
-      );
+      eraseStarts = layerDef.erase?.followDraw
+        ? order.map(() => effectiveEraseFrom)
+        : order.map(() =>
+            lerp(
+              effectiveEraseFrom,
+              eraseUntil - eraseDurationRange[1],
+              rng()
+            )
+          );
 
       for (let i = 0; i < order.length; i++) {
         if (eraseStarts[i] + eraseDurations[i] > eraseUntil) {
@@ -875,14 +1143,16 @@
         }
       }
 
-      let lastFinish = eraseFrom;
+      let lastFinish = effectiveEraseFrom;
       for (let i = 0; i < order.length; i++) {
         lastFinish = Math.max(lastFinish, eraseStarts[i] + eraseDurations[i]);
       }
       if (lastFinish > eraseUntil) {
-        const scale = eraseWindow / (lastFinish - eraseFrom);
+        const scale = eraseWindow / (lastFinish - effectiveEraseFrom);
         for (let i = 0; i < order.length; i++) {
-          eraseStarts[i] = eraseFrom + (eraseStarts[i] - eraseFrom) * scale;
+          eraseStarts[i] =
+            effectiveEraseFrom +
+            (eraseStarts[i] - effectiveEraseFrom) * scale;
           eraseDurations[i] = Math.max(0.25, eraseDurations[i] * scale);
         }
       }
@@ -1085,6 +1355,7 @@
     "flute-living": scheduleFluteLiving,
     "tree-breath": scheduleTreeBreath,
     "road-inward": scheduleRoadInward,
+    "living-cycle": scheduleLivingCycle,
     "burst-settle": scheduleBurstSettle,
     "long-first": scheduleLongFirst,
     "short-first": scheduleShortFirst,

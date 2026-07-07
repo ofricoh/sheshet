@@ -40,7 +40,12 @@
 
   function resolveStemAudio(samples, source) {
     if (!samples) return null;
-    const key = source === "other" ? "flute" : source;
+    const key =
+      source === "other"
+        ? "flute"
+        : source === "wind"
+          ? "flute"
+          : source;
     if (typeof samples === "object" && samples[key]) return samples[key];
     if (typeof samples === "object" && samples[source]) return samples[source];
     return samples;

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="he">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ששת | פה מינור</title>
+
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/songs/fminor.css">
+
+</head>
+
+<body class="plotter-page">
+
+  <div class="grid-layer">
+    <svg class="grid-svg"></svg>
+  </div>
+
+  <!-- Layer order: record base (bottom) -> engravings -> label (top) -->
+  <div class="plotter-viewport">
+    <div class="plotter-spin-group" id="plotterSpinGroup">
+
+      <div class="plotter-disc" id="plotterRecord"></div>
+
+      <div class="plotter-mount" id="plotterMount"></div>
+
+      <div class="plotter-label-layer" id="plotterLabelLayer">
+        <div class="plotter-label" id="plotterLabel">
+          <img
+            class="plotter-label-svg"
+            src="../assets/svg/songs/fminor/fminor.svg"
+            alt=""
+          >
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Minimal transport -->
+  <div class="plotter-controls">
+    <button id="playBtn" class="plotter-btn">Play</button>
+    <button id="pauseBtn" class="plotter-btn">Pause</button>
+  </div>
+
+  <div class="plotter-timeline-wrap">
+    <input
+      id="timeline"
+      class="plotter-timeline"
+      type="range"
+      min="0"
+      max="1000"
+      value="0"
+      step="1"
+      aria-label="timeline"
+    >
+  </div>
+
+  <audio
+    id="fminorAudio"
+    src="../audio/songs/fminor/fminor.mp3"
+    preload="metadata"
+  ></audio>
+
+  <script src="../js/listened-tracks.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/plotter/scene.js"></script>
+  <script src="../js/plotter/loader.js"></script>
+  <script src="../js/plotter/artboard.js"></script>
+  <script src="../js/plotter/renderer-svg.js"></script>
+  <script src="../js/plotter/path-utils.js"></script>
+  <script src="../js/plotter/pen.js"></script>
+  <script src="../js/plotter/scheduler.js"></script>
+  <script src="../js/plotter/audio-analyser.js"></script>
+  <script src="../js/plotter/modulation.js"></script>
+  <script src="../js/plotter/transport.js"></script>
+  <script src="../js/plotter/conductor.js"></script>
+  <script src="../js/plotter/debug-timecode.js"></script>
+  <script src="../js/plotter/index.js"></script>
+  <script src="../js/songs/fminor.js"></script>
+
+</body>
+
+</html>

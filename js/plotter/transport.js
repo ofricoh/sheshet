@@ -64,19 +64,26 @@
     }
 
     _tick() {
-      const t = this.currentTime();
+      try {
+        const t = this.currentTime();
 
-      if (
-        this.isPlaying ||
-        this._scrubbing ||
-        Math.abs(t - this._lastT) > 1e-4
-      ) {
-        this._emit();
-      }
+        if (
+          this.isPlaying ||
+          this._scrubbing ||
+          Math.abs(t - this._lastT) > 1e-4
+        ) {
+          this._emit();
+        }
 
-      if (this.isPlaying && this.timeline && !this._scrubbing) {
-        const dur = this.duration();
-        if (dur) this.timeline.value = String((t / dur) * 1000);
+        if (this.isPlaying && this.timeline && !this._scrubbing) {
+          const dur = this.duration();
+          if (dur) this.timeline.value = String((t / dur) * 1000);
+        }
+      } catch (err) {
+        console.error(
+          "[plotter:transport] frame error:",
+          err && err.message ? err.message : err
+        );
       }
 
       this._raf = requestAnimationFrame(this._tick);

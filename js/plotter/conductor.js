@@ -10,7 +10,108 @@
 (function (global) {
   "use strict";
 
-  function renderFrame(t, layerHandles, schedules, modulation) {
+  function extendScheduleBounds(sched, acc) {
+    if (!sched) return;
+
+    if (sched.cycles?.length) {
+      for (const cycle of sched.cycles) {
+        if (cycle.draw) {
+          acc(cycle.draw.start, cycle.draw.start + cycle.draw.duration);
+        }
+        if (cycle.erase) {
+          acc(cycle.erase.start, cycle.erase.start + cycle.erase.duration);
+        }
+      }
+      return;
+    }
+
+    if (sched.draw) {
+      acc(sched.draw.start, sched.draw.start + sched.draw.duration);
+    }
+    if (sched.erase) {
+      acc(sched.erase.start, sched.erase.start + sched.erase.duration);
+    }
+  }
+
+  /** Per-layer [min, max] song time where any unit may be visible. */
+  function computeLayerActiveBounds(schedules) {
+    const bounds = new Map();
+
+    for (const [layerId, schedMap] of schedules) {
+      let minT = Infinity;
+      let maxT = -Infinity;
+
+      for (const sched of schedMap.values()) {
+        extendScheduleBounds(sched, (start, end) => {
+          minT = Math.min(minT, start);
+          maxT = Math.max(maxT, end);
+        });
+      }
+
+      if (Number.isFinite(minT)) {
+        bounds.set(layerId, { min: minT, max: maxT });
+      }
+    }
+
+    return bounds;
+  }
+
+  function layerActiveAt(bounds, layerId, t) {
+    const window = bounds.get(layerId);
+    if (!window) return true;
+    return t >= window.min - 0.05 && t <= window.max + 0.05;
+  }
+
+  /** Active draw spec for living-cycle layers (pen direction changes per pass). */
+  function activeDrawSpec(sched, t) {
+    if (!sched) return null;
+
+    if (sched.cycles?.length) {
+      const cycles = sched.cycles
+        .filter((c) => c.draw)
+        .slice()
+        .sort((a, b) => a.draw.start - b.draw.start);
+
+      for (const cycle of cycles) {
+        const eraseEnd = cycle.erase
+          ? cycle.erase.start + cycle.erase.duration
+          : null;
+        if (t >= cycle.draw.start && (eraseEnd == null || t <= eraseEnd)) {
+          return cycle.draw;
+        }
+      }
+      return null;
+    }
+
+    return sched.draw || null;
+  }
+
+  function syncPenDirection(unit, drawSpec) {
+    if (!drawSpec || typeof unit.drawer.setDirection !== "function") return;
+
+    const cycleKey =
+      drawSpec.start +
+      "\0" +
+      (drawSpec.phase ?? "") +
+      "\0" +
+      (drawSpec.reverse ?? "") +
+      "\0" +
+      JSON.stringify(drawSpec.phases ?? "") +
+      "\0" +
+      JSON.stringify(drawSpec.reverses ?? "");
+
+    if (unit._penCycleKey === cycleKey) return;
+    unit._penCycleKey = cycleKey;
+
+    unit.drawer.setDirection({
+      phases: drawSpec.phases,
+      reverses: drawSpec.reverses,
+      phase: drawSpec.phase,
+      reverse: drawSpec.reverse,
+    });
+  }
+
+  function renderFrame(t, layerHandles, schedules, modulation, layerBounds) {
     const Scheduler = global.PlotterScheduler;
     const overrides =
       modulation && typeof modulation.getDrawOverrides === "function"
@@ -18,20 +119,40 @@
         : null;
 
     for (const lh of layerHandles.values()) {
+      if (layerBounds && !layerActiveAt(layerBounds, lh.id, t)) continue;
+
       const schedMap = schedules.get(lh.id);
       if (!schedMap) continue;
 
       for (const unit of lh.units) {
         const sched = schedMap.get(unit.id);
+        const overrideKey = lh.id + "\0" + unit.id;
+        const override = overrides && overrides.get(overrideKey);
+
         let state = Scheduler.unitStateAt(sched, t);
 
-        if (overrides) {
-          const key = lh.id + "\0" + unit.id;
-          const o = overrides.get(key);
-          if (o) state = Object.assign({}, state, o);
+        if (!override) {
+          syncPenDirection(unit, activeDrawSpec(sched, t));
+
+          const cache = unit._renderCache;
+          if (
+            cache &&
+            cache.progress === state.progress &&
+            cache.phase === state.phase
+          ) {
+            continue;
+          }
+        }
+
+        if (override) {
+          state = Object.assign({}, state, override);
         }
 
         unit.drawer.draw(state.progress, { phase: state.phase });
+        unit._renderCache = {
+          progress: state.progress,
+          phase: state.phase,
+        };
       }
     }
 
@@ -121,6 +242,7 @@
       layerHandles,
       seed
     );
+    const layerBounds = computeLayerActiveBounds(schedules);
 
     for (const lh of layerHandles.values()) {
       const schedMap = schedules.get(lh.id) || new Map();
@@ -179,20 +301,21 @@
       }
     }
 
+    const drawFrame = (time) =>
+      renderFrame(time, layerHandles, schedules, modulation, layerBounds);
+
     let transport = null;
     if (transportOpts) {
       console.log("[plotter:boot] wiring transport…");
       transport = new global.PlotterTransport(
         Object.assign({}, transportOpts, { analysers })
       );
-      transport.onTime((t) =>
-        renderFrame(t, layerHandles, schedules, modulation)
-      );
+      transport.onTime(drawFrame);
       transport.start();
       transport._emit();
       console.log("[plotter:boot] transport ready");
     } else {
-      renderFrame(0, layerHandles, schedules, modulation);
+      drawFrame(0);
     }
 
     return {
@@ -203,7 +326,7 @@
       modulation,
       analysers,
       render(t) {
-        renderFrame(t, layerHandles, schedules, modulation);
+        drawFrame(t);
       },
       destroy() {
         if (transport) transport.destroy();

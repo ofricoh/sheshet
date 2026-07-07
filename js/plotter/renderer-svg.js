@@ -40,13 +40,21 @@
     const { artboard, transform } = mountOpts;
 
     let parent = svg;
-    if (transform && transform.rotate != null && artboard) {
-      const wrap = document.createElementNS(SVG_NS, "g");
-      const cx = artboard.x + artboard.w / 2;
-      const cy = artboard.y + artboard.h / 2;
-      wrap.setAttribute("transform", `rotate(${transform.rotate} ${cx} ${cy})`);
-      svg.appendChild(wrap);
-      parent = wrap;
+    if (transform && artboard) {
+      const tx = transform.x ?? 0;
+      const ty = transform.y ?? 0;
+      const rot = transform.rotate;
+      if (tx || ty || rot != null) {
+        const wrap = document.createElementNS(SVG_NS, "g");
+        const cx = artboard.x + artboard.w / 2;
+        const cy = artboard.y + artboard.h / 2;
+        const parts = [];
+        if (tx || ty) parts.push(`translate(${tx} ${ty})`);
+        if (rot != null) parts.push(`rotate(${rot} ${cx} ${cy})`);
+        wrap.setAttribute("transform", parts.join(" "));
+        svg.appendChild(wrap);
+        parent = wrap;
+      }
     }
 
     for (const unit of layer.units) {

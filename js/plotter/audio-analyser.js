@@ -13,6 +13,16 @@
     return v < 0 ? 0 : v > 1 ? 1 : v;
   }
 
+  let sharedCtx = null;
+
+  function getSharedContext() {
+    if (sharedCtx) return sharedCtx;
+    const AudioCtx = global.AudioContext || global.webkitAudioContext;
+    if (!AudioCtx) return null;
+    sharedCtx = new AudioCtx();
+    return sharedCtx;
+  }
+
   const PROFILES = {
     default: {
       smoothing: 0.82,
@@ -26,23 +36,54 @@
       resonanceFollow: 0.52,
       slowFollow: 0.08,
     },
+    wind: {
+      smoothing: 0.48,
+      envelopeFollow: 0.46,
+      resonanceFollow: 0.52,
+      slowFollow: 0.08,
+    },
+    guitar: {
+      smoothing: 0.38,
+      envelopeFollow: 0.52,
+      resonanceFollow: 0.48,
+      slowFollow: 0.07,
+    },
+    bass: {
+      smoothing: 0.62,
+      envelopeFollow: 0.34,
+      resonanceFollow: 0.28,
+      slowFollow: 0.1,
+    },
+    piano: {
+      smoothing: 0.28,
+      envelopeFollow: 0.58,
+      resonanceFollow: 0.42,
+      slowFollow: 0.05,
+    },
+    drums: {
+      smoothing: 0.45,
+      envelopeFollow: 0.48,
+      resonanceFollow: 0.35,
+      slowFollow: 0.06,
+    },
   };
 
   function createAnalyser(options) {
     const audio = options && options.audio;
     if (!audio) return null;
 
-    const AudioCtx = global.AudioContext || global.webkitAudioContext;
-    if (!AudioCtx) {
+    const ctx = getSharedContext();
+    if (!ctx) {
       console.warn("[audio-analyser] Web Audio API unavailable");
       return null;
     }
 
     const profileName = (options && options.profile) || "default";
     const profile = PROFILES[profileName] || PROFILES.default;
-    const isFlute = profileName === "flute";
-
-    const ctx = new AudioCtx();
+    const isFlute = profileName === "flute" || profileName === "wind";
+    const isGuitar = profileName === "guitar";
+    const isBass = profileName === "bass";
+    const isPiano = profileName === "piano";
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 2048;
     analyser.smoothingTimeConstant = profile.smoothing;
@@ -107,11 +148,14 @@
       const midFlux = Math.max(0, mid - prevMid);
 
       const attack = clamp01(
-        rmsJump * (isFlute ? 20 : 14) +
-          hiJump * (isFlute ? 8 : 10) +
-          midFlux * (isFlute ? 16 : 0) +
-          rms * 1.8 +
-          hi * 0.55
+        rmsJump *
+          (isFlute ? 20 : isPiano ? 24 : isGuitar ? 18 : 14) +
+          hiJump *
+            (isFlute ? 8 : isGuitar ? 14 : isPiano ? 6 : 10) +
+          midFlux *
+            (isFlute ? 16 : isPiano ? 20 : isGuitar ? 4 : 0) +
+          rms * (isBass ? 2.4 : 1.8) +
+          hi * (isGuitar ? 0.72 : 0.55)
       );
 
       prevRms = rms;
@@ -127,7 +171,23 @@
       let resonance = clamp01(spectral * 0.7 + rms * 1.6);
       resonance += (target - resonance) * profile.resonanceFollow;
 
-      const guitar = clamp01(hi * 0.65 + mid * 0.25 + attack * 0.75);
+      const guitar = clamp01(
+        hi * (isGuitar ? 0.78 : 0.65) +
+          mid * 0.25 +
+          attack * (isGuitar ? 0.88 : 0.75) +
+          hiJump * (isGuitar ? 9 : 0)
+      );
+      const bass = clamp01(
+        lo * (isBass ? 1.35 : 1.05) +
+          rms * (isBass ? 1.05 : 0.65) +
+          mid * 0.08
+      );
+      const piano = clamp01(
+        mid * (isPiano ? 1.05 : 0.72) +
+          attack * (isPiano ? 1.05 : 0.82) +
+          midFlux * (isPiano ? 16 : 8) +
+          rmsJump * (isPiano ? 14 : 6)
+      );
       const cymbal = clamp01(hi * 0.72 + attack * 0.88 + hiJump * 11);
       const drums = clamp01(rms * 2.4 + hi * 0.45 + attack * 0.55);
       const cue = clamp01(rms * 2.6 + mid * 0.55 + hi * 0.35 + attack * 0.4);
@@ -141,6 +201,8 @@
         flute: clamp01(mid * 0.85 + rms * 1.4),
         resonance,
         guitar,
+        bass,
+        piano,
         cymbal,
         drums,
         cue,
@@ -169,6 +231,52 @@
         );
         out.resonance = clamp01(
           resonance * 0.35 + live * 0.4 + transient * 0.25
+        );
+      }
+
+      if (isGuitar) {
+        const live = clamp01(
+          hi * 1.05 + mid * 0.42 + attack * 0.72 + hiJump * 10
+        );
+        const transient = clamp01(hiJump * 16 + attack * 0.85 + rmsJump * 8);
+        const dynamics = clamp01(
+          (live - slowEnvelope) / (slowEnvelope * 0.38 + 0.05)
+        );
+        out.live = live;
+        out.transient = transient;
+        out.dynamics = dynamics;
+        out.guitar = clamp01(
+          live * 0.55 + transient * 0.28 + dynamics * 0.22
+        );
+      }
+
+      if (isBass) {
+        const live = clamp01(lo * 1.25 + rms * 1.05 + mid * 0.12);
+        const transient = clamp01(rmsJump * 12 + midFlux * 6 + attack * 0.35);
+        const dynamics = clamp01(
+          (live - slowEnvelope) / (slowEnvelope * 0.35 + 0.05)
+        );
+        out.live = live;
+        out.transient = transient;
+        out.dynamics = dynamics;
+        out.bass = clamp01(live * 0.62 + transient * 0.18 + dynamics * 0.2);
+      }
+
+      if (isPiano) {
+        const live = clamp01(
+          mid * 1.15 + attack * 0.95 + midFlux * 14 + rmsJump * 10
+        );
+        const transient = clamp01(
+          midFlux * 20 + rmsJump * 18 + attack * 0.92
+        );
+        const dynamics = clamp01(
+          (live - slowEnvelope) / (slowEnvelope * 0.32 + 0.04)
+        );
+        out.live = live;
+        out.transient = transient;
+        out.dynamics = dynamics;
+        out.piano = clamp01(
+          live * 0.5 + transient * 0.34 + dynamics * 0.24
         );
       }
 

@@ -1,6 +1,6 @@
 /* ============================================================
    PLOTTER PAGE — centered vinyl composition
-   Audio-only record page (no plotter layers yet).
+   Layer timelines: js/songs/seveneight.js (SEVENEIGHT_SCORE)
    ============================================================ */
 
 .plotter-page {
@@ -51,6 +51,10 @@
   height: 100%;
   pointer-events: none;
   z-index: 1;
+  overflow: visible;
+}
+
+.plotter-mount svg.plotter-layer {
   overflow: visible;
 }
 
