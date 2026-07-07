@@ -1,8 +1,8 @@
 /* ============================================================
    DINOSAURUS JR. (דינוזאורוס הבן) — Plotter Machine score
    ------------------------------------------------------------
-   A fast, stem-reactive journey through Misgav — one continuous
-   composition where layers overlap, hand off, and erase naturally.
+   A fast, stem-reactive journey through Misgav — layers enter,
+   develop, erase, and return. Nothing sits frozen on screen.
    Creative instructions only; the engine resolves timing,
    strategies, unit schedules, and pen phases automatically.
    ============================================================ */
@@ -32,174 +32,206 @@ const DINOSAURUS_FINAL_ERASE_RANGE = [0.4, 1.2];
 /** Staggered coda exits — instruments fade one after another. */
 const DINOSAURUS_DISSOLVE = (from, until) => ({ from, until });
 
-/** Guest texture — quick clear. */
+/** Quick guest clear — tight window, no lingering. */
 const DINOSAURUS_GUEST_CLEAR = (from, until) => ({ from, until });
 
-/** Opening burst — many ideas, tight overlap (00:00 → 00:36). */
-const DINOSAURUS_OPEN_EDGE = {
-  strategy: "edge-stagger",
+/** Section exit — draw ends, living-cycle clears shortly after. */
+const DINOSAURUS_SECTION_EXIT = (from, until) => ({ from, until });
+
+/* ── Living-cycle pools — continuous draw/erase motion ─────── */
+
+/** Restless opening — rapid turnover. */
+const DINOSAURUS_LIVING_OPEN = {
+  strategy: "living-cycle",
   pool: {
     maxConcurrent: 4,
-    durationRange: [0.85, 2.5],
-    minDuration: 0.55,
-    staggerRange: [0.08, 0.35],
-    eraseDurationRange: [0.4, 1.2],
+    cyclesPerUnit: [2, 4],
+    finalClearSec: 1.0,
+    durationRange: [0.4, 1.2],
+    eraseDurationRange: [0.3, 0.9],
+    holdRange: [0.03, 0.15],
+    gapRange: [0.06, 0.28],
+    staggerRange: [0.05, 0.22],
+    minDuration: 0.25,
   },
 };
 
-/** Fast guest weave for restless passages. */
-const DINOSAURUS_GUEST_FAST = {
-  strategy: "edge-stagger",
+/** Mid-song passages — rhythmic but readable. */
+const DINOSAURUS_LIVING_MID = {
+  strategy: "living-cycle",
+  pool: {
+    maxConcurrent: 3,
+    cyclesPerUnit: [2, 3],
+    finalClearSec: 1.8,
+    durationRange: [0.85, 2.4],
+    eraseDurationRange: [0.6, 1.75],
+    holdRange: [0.1, 0.4],
+    gapRange: [0.18, 0.65],
+    staggerRange: [0.15, 0.5],
+    minDuration: 0.55,
+  },
+};
+
+/** Homes anchor — bass-pulsed living texture from 01:28. */
+const DINOSAURUS_LIVING_HOMES = {
+  strategy: "living-cycle",
+  pool: {
+    maxConcurrent: 3,
+    cyclesPerUnit: [3, 5],
+    finalClearSec: 2.2,
+    durationRange: [1.4, 3.8],
+    eraseDurationRange: [1.1, 2.8],
+    holdRange: [0.12, 0.45],
+    gapRange: [0.2, 0.7],
+    staggerRange: [0.25, 0.75],
+    minDuration: 0.9,
+  },
+};
+
+/** Vocal chaos — fast overlapping turnover. */
+const DINOSAURUS_LIVING_CHAOS = {
+  strategy: "living-cycle",
+  pool: {
+    maxConcurrent: 5,
+    cyclesPerUnit: [2, 4],
+    finalClearSec: 0.9,
+    durationRange: [0.35, 1.05],
+    eraseDurationRange: [0.28, 0.82],
+    holdRange: [0.02, 0.12],
+    gapRange: [0.04, 0.2],
+    staggerRange: [0.04, 0.18],
+    minDuration: 0.2,
+  },
+};
+
+/** Guest weave — quick in/out cycles. */
+const DINOSAURUS_LIVING_GUEST = {
+  strategy: "living-cycle",
   allowViewBoxMismatch: true,
   pool: {
     maxConcurrent: 3,
-    durationRange: [0.65, 2.0],
-    minDuration: 0.4,
-    staggerRange: [0.06, 0.28],
-    eraseDurationRange: [0.3, 0.95],
+    cyclesPerUnit: [2, 3],
+    finalClearSec: 0.8,
+    durationRange: [0.5, 1.5],
+    eraseDurationRange: [0.35, 1.0],
+    holdRange: [0.04, 0.18],
+    gapRange: [0.08, 0.32],
+    staggerRange: [0.06, 0.25],
+    minDuration: 0.3,
   },
 };
 
-/** Vocal chaos — opening disorder returns (02:05 & 05:50 passages). */
-const DINOSAURUS_VOCAL_CHAOS = {
-  strategy: "edge-stagger",
-  allowViewBoxMismatch: true,
+/** Field hatching — organic living pool. */
+const DINOSAURUS_FIELDS_LIVING = {
+  strategy: "living-cycle",
   pool: {
-    maxConcurrent: 4,
-    durationRange: [0.7, 2.1],
-    minDuration: 0.45,
-    staggerRange: [0.07, 0.3],
-    eraseDurationRange: [0.32, 0.95],
+    maxConcurrent: 2,
+    cyclesPerUnit: [2, 3],
+    finalClearSec: 1.5,
+    durationRange: [0.75, 2.2],
+    eraseDurationRange: [0.55, 1.5],
+    holdRange: [0.08, 0.35],
+    gapRange: [0.15, 0.55],
+    staggerRange: [0.12, 0.42],
+    minDuration: 0.5,
   },
-};
-
-/** Field hatching — faster organic pool. */
-const DINOSAURUS_FIELDS_FAST = {
-  maxConcurrent: 2,
-  speedRange: [0.52, 0.92],
-  durationRange: [1.1, 3.2],
-  minDuration: 0.75,
-  staggerRange: [0.2, 0.65],
-  eraseDurationRange: [0.55, 1.65],
 };
 
 /** Guitar-rhythmic fields (03:45). */
-const DINOSAURUS_FIELDS_GUITAR = {
-  maxConcurrent: 3,
-  speedRange: [0.58, 0.98],
-  durationRange: [0.85, 2.6],
-  minDuration: 0.55,
-  staggerRange: [0.12, 0.48],
-  eraseDurationRange: [0.45, 1.35],
-};
-
-/** Path / road geometry. */
-const DINOSAURUS_EDGE = {
-  strategy: "edge-stagger",
+const DINOSAURUS_FIELDS_GUITAR_LIVING = {
+  strategy: "living-cycle",
   pool: {
     maxConcurrent: 3,
-    durationRange: [1.2, 3.8],
-    minDuration: 0.75,
-    staggerRange: [0.2, 0.65],
-    eraseDurationRange: [0.65, 2.0],
+    cyclesPerUnit: [2, 4],
+    finalClearSec: 1.4,
+    durationRange: [0.55, 1.65],
+    eraseDurationRange: [0.4, 1.2],
+    holdRange: [0.05, 0.22],
+    gapRange: [0.1, 0.38],
+    staggerRange: [0.08, 0.32],
+    minDuration: 0.35,
   },
 };
 
-/** House anchor — deliberate architecture (clears before 01:28). */
+/** Flute long lines — slow draw, tremble while held, erase along pen. */
+const DINOSAURUS_FLUTE_LIVING = {
+  strategy: "flute-living",
+  allowViewBoxMismatch: true,
+  pool: {
+    maxConcurrent: 3,
+    drawWindow: 10,
+    eraseBudget: 4.5,
+    durationRange: [1.4, 3.6],
+    eraseDurationRange: [0.7, 2.0],
+    staggerRange: [0.22, 0.72],
+    minDuration: 0.9,
+  },
+};
+
+/** House anchor — deliberate architecture, clears before 01:28. */
 const DINOSAURUS_HOUSE_ANCHOR = {
   strategy: "edge-stagger",
   pool: {
     maxConcurrent: 2,
-    durationRange: [3.4, 9.0],
-    minDuration: 2.5,
-    staggerRange: [0.75, 2.1],
-    eraseDurationRange: [2.0, 5.5],
-  },
-};
-
-/** Homes settlement — bass-pulsed main layer from 01:28. */
-const DINOSAURUS_HOMES_MAIN = {
-  strategy: "edge-stagger",
-  pool: {
-    maxConcurrent: 3,
-    durationRange: [2.4, 6.8],
-    minDuration: 1.6,
-    staggerRange: [0.5, 1.45],
+    durationRange: [2.8, 7.5],
+    minDuration: 2.0,
+    staggerRange: [0.65, 1.85],
     eraseDurationRange: [1.8, 4.8],
   },
 };
 
 /** Homes overlay — additive structural return (04:31). */
-const DINOSAURUS_HOMES_OVERLAY = {
-  strategy: "edge-stagger",
+const DINOSAURUS_HOMES_OVERLAY_LIVING = {
+  strategy: "living-cycle",
   pool: {
     maxConcurrent: 3,
-    durationRange: [2.0, 5.8],
-    minDuration: 1.4,
-    staggerRange: [0.4, 1.2],
-    eraseDurationRange: [2.2, 5.5],
+    cyclesPerUnit: [2, 4],
+    finalClearSec: 2.5,
+    durationRange: [1.2, 3.4],
+    eraseDurationRange: [1.0, 2.6],
+    holdRange: [0.1, 0.38],
+    gapRange: [0.18, 0.6],
+    staggerRange: [0.2, 0.65],
+    minDuration: 0.75,
   },
 };
 
-const DINOSAURUS_EDGE_SLOW = {
-  strategy: "edge-stagger",
-  pool: {
-    maxConcurrent: 3,
-    durationRange: [2.2, 6.5],
-    minDuration: 1.5,
-    staggerRange: [0.45, 1.35],
-    eraseDurationRange: [1.4, 4.0],
-  },
-};
-
-const DINOSAURUS_MONUMENT = {
-  strategy: "long-first",
+const DINOSAURUS_MONUMENT_LIVING = {
+  strategy: "living-cycle",
   pool: {
     maxConcurrent: 2,
-    durationRange: [2.6, 7.2],
-    minDuration: 1.8,
-    staggerRange: [0.35, 1.05],
-    eraseDurationRange: [1.2, 3.6],
+    cyclesPerUnit: [2, 3],
+    finalClearSec: 2.0,
+    durationRange: [1.6, 4.2],
+    eraseDurationRange: [1.2, 3.0],
+    holdRange: [0.15, 0.5],
+    gapRange: [0.25, 0.8],
+    staggerRange: [0.2, 0.65],
+    minDuration: 1.0,
   },
 };
 
-const DINOSAURUS_EDGE_DENSE = {
-  strategy: "edge-stagger",
-  pool: {
-    maxConcurrent: 5,
-    durationRange: [0.9, 2.8],
-    minDuration: 0.55,
-    staggerRange: [0.12, 0.42],
-    eraseDurationRange: [0.45, 1.35],
+/* ── Stem-reactive modulation ──────────────────────────────── */
+
+const DINOSAURUS_FLUTE_REACT = {
+  tremble: {
+    source: "flute",
+    maxPx: 1.45,
+    minPx: 0.05,
+    freq1: 44,
+    freq2: 61,
+    freq3: 27,
+  },
+  drawSpeed: {
+    source: "flute",
+    longLineShare: 0.42,
+    slowMult: 0.58,
+    fastMult: 2.65,
+    dynamicsWeight: 0.62,
+    follow: 0.18,
   },
 };
 
-const DINOSAURUS_GUEST = {
-  strategy: "edge-stagger",
-  allowViewBoxMismatch: true,
-  pool: {
-    maxConcurrent: 3,
-    durationRange: [0.8, 2.4],
-    minDuration: 0.5,
-    staggerRange: [0.1, 0.38],
-    eraseDurationRange: [0.28, 0.85],
-  },
-};
-
-/** Long-line flute layer — autumnnights lines (not Rahavia). */
-const DINOSAURUS_FLUTE_LINES = {
-  strategy: "edge-stagger",
-  allowViewBoxMismatch: true,
-  pool: {
-    maxConcurrent: 3,
-    durationRange: [1.0, 3.4],
-    minDuration: 0.65,
-    staggerRange: [0.18, 0.62],
-    eraseDurationRange: [0.75, 2.2],
-  },
-};
-
-/** Stem-reactive draw speed. */
 const DINOSAURUS_DRUMS_SPEED = {
   source: "drums",
   longLineShare: 0.3,
@@ -230,14 +262,7 @@ const DINOSAURUS_GUITAR_SPEED = {
   energy: 1.1,
 };
 
-const DINOSAURUS_FLUTE_SPEED = {
-  source: "flute",
-  longLineShare: 0.42,
-  slowMult: 0.58,
-  fastMult: 2.65,
-  dynamicsWeight: 0.62,
-  follow: 0.18,
-};
+const DINOSAURUS_FLUTE_SPEED = DINOSAURUS_FLUTE_REACT.drawSpeed;
 
 const DINOSAURUS_BASS_SPEED = {
   source: "bass",
@@ -315,10 +340,9 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_fields_open_1",
       file: "Dinosaurus_fields.svg",
-      strategy: "organic-pool",
+      ...DINOSAURUS_FIELDS_LIVING,
       draw: { at: 0, until: 26 },
-      erase: { from: 20, until: 32 },
-      pool: DINOSAURUS_FIELDS_FAST,
+      erase: DINOSAURUS_SECTION_EXIT(24, 32),
       modulation: {
         drawSpeed: { ...DINOSAURUS_DRUMS_SPEED, from: 0, until: 32 },
       },
@@ -327,7 +351,7 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_dalia_open_1",
       file: "../aquarel/aquarel_dalia.svg",
-      ...DINOSAURUS_GUEST_FAST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 1, until: 12 },
       erase: DINOSAURUS_GUEST_CLEAR(10, 14),
       modulation: {
@@ -338,7 +362,7 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_place_open_1",
       file: "../autumnnights/autumnnights_place.svg",
-      ...DINOSAURUS_GUEST_FAST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 3, until: 15 },
       erase: DINOSAURUS_GUEST_CLEAR(12, 16),
       modulation: {
@@ -349,9 +373,9 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_street_open",
       file: "Dinosaurus_street.svg",
-      ...DINOSAURUS_OPEN_EDGE,
+      ...DINOSAURUS_LIVING_OPEN,
       draw: { at: 5, until: 30 },
-      erase: { from: 26, until: 35 },
+      erase: DINOSAURUS_SECTION_EXIT(26, 35),
       modulation: {
         drawSpeed: { ...DINOSAURUS_GUITAR_SPEED, from: 5, until: 35 },
       },
@@ -360,7 +384,7 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_street_open_1",
       file: "../samba/sambaberegelsmol_street.svg",
-      ...DINOSAURUS_GUEST_FAST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 7, until: 18 },
       erase: DINOSAURUS_GUEST_CLEAR(15, 19),
       modulation: {
@@ -371,7 +395,7 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_dalia_open_2",
       file: "../aquarel/aquarel_dalia.svg",
-      ...DINOSAURUS_GUEST_FAST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 12, until: 24 },
       erase: DINOSAURUS_GUEST_CLEAR(21, 25),
       modulation: {
@@ -382,7 +406,7 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_place_open_2",
       file: "../autumnnights/autumnnights_place.svg",
-      ...DINOSAURUS_GUEST_FAST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 15, until: 28 },
       erase: DINOSAURUS_GUEST_CLEAR(25, 30),
       modulation: {
@@ -393,10 +417,9 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_fields_open_2",
       file: "Dinosaurus_fields.svg",
-      strategy: "organic-pool",
+      ...DINOSAURUS_FIELDS_LIVING,
       draw: { at: 18, until: 36 },
-      erase: { from: 30, until: 38 },
-      pool: DINOSAURUS_FIELDS_FAST,
+      erase: DINOSAURUS_SECTION_EXIT(30, 38),
       modulation: {
         drawSpeed: { ...DINOSAURUS_BASS_SPEED, from: 18, until: 38 },
       },
@@ -405,7 +428,7 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_street_open_2",
       file: "../samba/sambaberegelsmol_street.svg",
-      ...DINOSAURUS_GUEST_FAST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 22, until: 34 },
       erase: DINOSAURUS_GUEST_CLEAR(30, 35),
       modulation: {
@@ -416,7 +439,7 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_dalia_open_3",
       file: "../aquarel/aquarel_dalia.svg",
-      ...DINOSAURUS_GUEST_FAST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 26, until: 36 },
       erase: DINOSAURUS_GUEST_CLEAR(33, 37),
       modulation: {
@@ -429,8 +452,8 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_street_bridge",
       file: "Dinosaurus_street.svg",
-      ...DINOSAURUS_EDGE,
-      draw: { at: 34, until: 58 },
+      ...DINOSAURUS_LIVING_MID,
+      draw: { at: 34, until: 78 },
       erase: DINOSAURUS_CLEAR_FOR_HOMES,
       modulation: {
         drawSpeed: { ...DINOSAURUS_GUITAR_SPEED, from: 34, until: 88 },
@@ -440,15 +463,9 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_fields_bridge",
       file: "Dinosaurus_fields.svg",
-      strategy: "organic-pool",
-      draw: { at: 36, until: 62 },
+      ...DINOSAURUS_FIELDS_LIVING,
+      draw: { at: 36, until: 76 },
       erase: DINOSAURUS_CLEAR_FOR_HOMES,
-      pool: {
-        ...DINOSAURUS_FIELDS_FAST,
-        maxConcurrent: 2,
-        durationRange: [1.4, 3.8],
-        staggerRange: [0.3, 0.85],
-      },
       modulation: {
         drawSpeed: { ...DINOSAURUS_STRINGS_SPEED, from: 36, until: 88 },
       },
@@ -457,11 +474,12 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_place_bridge",
       file: "../autumnnights/autumnnights_place.svg",
-      ...DINOSAURUS_GUEST_FAST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 44, until: 58 },
       erase: DINOSAURUS_GUEST_CLEAR(55, 60),
       modulation: {
         drawSpeed: { ...DINOSAURUS_FLUTE_SPEED, from: 44, until: 60 },
+        tremble: { ...DINOSAURUS_FLUTE_REACT.tremble, from: 44, until: 60 },
       },
     },
 
@@ -470,7 +488,7 @@ const DINOSAURUS_SCORE = {
       id: "dinosaurus_house_anchor",
       file: "Dinosaurus_house.svg",
       ...DINOSAURUS_HOUSE_ANCHOR,
-      draw: { at: 61, until: 100, naturalPace: true },
+      draw: { at: 61, until: 82 },
       erase: DINOSAURUS_CLEAR_FOR_HOMES,
       modulation: {
         drawSpeed: { ...DINOSAURUS_HOUSE_SPEED, from: 61, until: 88 },
@@ -480,8 +498,8 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_street_house_pass",
       file: "Dinosaurus_street.svg",
-      ...DINOSAURUS_EDGE,
-      draw: { at: 58, until: 85 },
+      ...DINOSAURUS_LIVING_MID,
+      draw: { at: 58, until: 78 },
       erase: DINOSAURUS_CLEAR_FOR_HOMES,
       modulation: {
         drawSpeed: { ...DINOSAURUS_GUITAR_SPEED, from: 58, until: 88 },
@@ -491,25 +509,25 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_dalia_house",
       file: "../aquarel/aquarel_dalia.svg",
-      ...DINOSAURUS_GUEST,
-      draw: { at: 68, until: 85 },
+      ...DINOSAURUS_LIVING_GUEST,
+      draw: { at: 68, until: 78 },
       erase: DINOSAURUS_CLEAR_FOR_HOMES,
       modulation: {
         drawSpeed: { ...DINOSAURUS_PIANO_SPEED, from: 68, until: 88 },
       },
     },
 
-    /* Layer 4 — homes (main layer from 01:28, bass-pulsed) */
+    /* Layer 4 — homes (main layer from 01:28, bass-pulsed living) */
     {
       id: "dinosaurus_homes_main",
       file: "Dinosaurus_homes.svg",
-      ...DINOSAURUS_HOMES_MAIN,
-      draw: { at: 74, until: 132, naturalPace: true },
-      erase: { from: 158, until: 172 },
+      ...DINOSAURUS_LIVING_HOMES,
+      draw: { at: 74, until: 163 },
+      erase: DINOSAURUS_SECTION_EXIT(158, 172),
       modulation: {
         drawSpeed: {
           ...DINOSAURUS_HOMES_BASS_REACT.drawSpeed,
-          from: 74,
+          from: 88,
           until: 163,
         },
         inkBreath: {
@@ -525,10 +543,11 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_flute_lines_1",
       file: "../autumnnights/autumnnights_lines.svg",
-      ...DINOSAURUS_FLUTE_LINES,
+      ...DINOSAURUS_FLUTE_LIVING,
       draw: { at: 100, until: 125 },
-      erase: { from: 122, until: 128 },
+      erase: DINOSAURUS_SECTION_EXIT(122, 128),
       modulation: {
+        tremble: { ...DINOSAURUS_FLUTE_REACT.tremble, from: 100, until: 128 },
         drawSpeed: { ...DINOSAURUS_FLUTE_SPEED, from: 100, until: 128 },
       },
     },
@@ -538,49 +557,42 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_chaos_vocal_dalia_1",
       file: "../aquarel/aquarel_dalia.svg",
-      ...DINOSAURUS_VOCAL_CHAOS,
-      draw: { at: 125, until: 136 },
-      erase: { from: 133, until: 137 },
+      ...DINOSAURUS_LIVING_CHAOS,
+      draw: { at: 125, until: 142 },
+      erase: DINOSAURUS_SECTION_EXIT(138, 143),
       modulation: {
-        drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 125, until: 137 },
+        drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 125, until: 143 },
       },
     },
 
     {
       id: "dinosaurus_chaos_vocal_place_1",
       file: "../autumnnights/autumnnights_place.svg",
-      ...DINOSAURUS_VOCAL_CHAOS,
-      draw: { at: 127, until: 138 },
-      erase: { from: 135, until: 139 },
+      ...DINOSAURUS_LIVING_CHAOS,
+      draw: { at: 127, until: 142 },
+      erase: DINOSAURUS_SECTION_EXIT(139, 143),
       modulation: {
-        drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 127, until: 139 },
+        drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 127, until: 143 },
       },
     },
 
     {
       id: "dinosaurus_chaos_vocal_street_1",
       file: "../samba/sambaberegelsmol_street.svg",
-      ...DINOSAURUS_VOCAL_CHAOS,
-      draw: { at: 128, until: 140 },
-      erase: { from: 137, until: 141 },
+      ...DINOSAURUS_LIVING_CHAOS,
+      draw: { at: 128, until: 142 },
+      erase: DINOSAURUS_SECTION_EXIT(140, 144),
       modulation: {
-        drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 128, until: 141 },
+        drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 128, until: 144 },
       },
     },
 
     {
       id: "dinosaurus_chaos_vocal_fields_1",
       file: "Dinosaurus_fields.svg",
-      strategy: "organic-pool",
+      ...DINOSAURUS_LIVING_CHAOS,
       draw: { at: 130, until: 142 },
-      erase: { from: 139, until: 143 },
-      pool: {
-        ...DINOSAURUS_FIELDS_FAST,
-        maxConcurrent: 3,
-        durationRange: [0.7, 2.0],
-        staggerRange: [0.1, 0.35],
-        eraseDurationRange: [0.35, 0.9],
-      },
+      erase: DINOSAURUS_SECTION_EXIT(139, 143),
       modulation: {
         drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 130, until: 143 },
       },
@@ -589,23 +601,50 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_chaos_vocal_street_1b",
       file: "Dinosaurus_street.svg",
-      ...DINOSAURUS_VOCAL_CHAOS,
+      ...DINOSAURUS_LIVING_CHAOS,
       draw: { at: 132, until: 142 },
-      erase: { from: 140, until: 144 },
+      erase: DINOSAURUS_SECTION_EXIT(140, 144),
       modulation: {
         drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 132, until: 144 },
+      },
+    },
+
+    /* ── Homes breathe — bass pulse between main homes and act II peak ── */
+
+    {
+      id: "dinosaurus_homes_breathe",
+      file: "Dinosaurus_homes.svg",
+      ...DINOSAURUS_LIVING_HOMES,
+      draw: { at: 163, until: 188 },
+      erase: DINOSAURUS_SECTION_EXIT(184, 192),
+      pool: {
+        ...DINOSAURUS_LIVING_HOMES.pool,
+        maxConcurrent: 2,
+        cyclesPerUnit: [2, 3],
+      },
+      modulation: {
+        drawSpeed: { ...DINOSAURUS_BASS_SPEED, from: 163, until: 192 },
+        inkBreath: {
+          source: "bass",
+          from: 163,
+          until: 192,
+          energy: 0.32,
+          depthRange: [0.008, 0.022],
+        },
       },
     },
 
     /* ── ACT II — monument & square (~02:22 → ~03:45) ────────── */
 
     {
+      id: "dinosaurus_pesel_main",
       file: "Dinosaurus_pesel.svg",
-      ...DINOSAURUS_MONUMENT,
-      draw: { at: 142, until: 188, naturalPace: true },
-      erase: { from: 185, until: 200 },
+      ...DINOSAURUS_MONUMENT_LIVING,
+      draw: { at: 142, until: 188 },
+      erase: DINOSAURUS_SECTION_EXIT(185, 200),
       modulation: {
         drawSpeed: { ...DINOSAURUS_FLUTE_SPEED, from: 142, until: 188 },
+        tremble: { ...DINOSAURUS_FLUTE_REACT.tremble, from: 142, until: 200 },
       },
     },
 
@@ -614,25 +653,27 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_flute_lines_2",
       file: "../autumnnights/autumnnights_lines.svg",
-      ...DINOSAURUS_FLUTE_LINES,
+      ...DINOSAURUS_FLUTE_LIVING,
       draw: { at: 163, until: 220 },
-      erase: { from: 216, until: 222 },
+      erase: DINOSAURUS_SECTION_EXIT(216, 222),
       pool: {
-        ...DINOSAURUS_FLUTE_LINES.pool,
+        ...DINOSAURUS_FLUTE_LIVING.pool,
         maxConcurrent: 4,
-        durationRange: [0.9, 3.0],
-        staggerRange: [0.15, 0.55],
+        durationRange: [1.2, 3.2],
+        staggerRange: [0.18, 0.62],
       },
       modulation: {
+        tremble: { ...DINOSAURUS_FLUTE_REACT.tremble, from: 163, until: 222 },
         drawSpeed: { ...DINOSAURUS_FLUTE_SPEED, from: 163, until: 222 },
       },
     },
 
     {
+      id: "dinosaurus_riboa_pass",
       file: "Dinosaurus_riboa.svg",
-      ...DINOSAURUS_EDGE,
+      ...DINOSAURUS_LIVING_MID,
       draw: { at: 168, until: 218 },
-      erase: { from: 212, until: 226 },
+      erase: DINOSAURUS_SECTION_EXIT(212, 226),
       modulation: {
         drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 168, until: 218 },
       },
@@ -641,11 +682,40 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_street_return_1",
       file: "Dinosaurus_street.svg",
-      ...DINOSAURUS_EDGE_DENSE,
+      ...DINOSAURUS_LIVING_MID,
       draw: { at: 205, until: 248 },
-      erase: DINOSAURUS_DISSOLVE(382, 391),
+      erase: DINOSAURUS_SECTION_EXIT(244, 252),
+      pool: {
+        ...DINOSAURUS_LIVING_MID.pool,
+        maxConcurrent: 4,
+        cyclesPerUnit: [3, 5],
+      },
       modulation: {
-        drawSpeed: { ...DINOSAURUS_DRUMS_SPEED, from: 205, until: 248 },
+        drawSpeed: { ...DINOSAURUS_DRUMS_SPEED, from: 205, until: 252 },
+      },
+    },
+
+    /* Transitional weave — drums between street and guitar fields */
+    {
+      id: "dinosaurus_street_weave",
+      file: "Dinosaurus_street.svg",
+      ...DINOSAURUS_LIVING_OPEN,
+      draw: { at: 218, until: 228 },
+      erase: DINOSAURUS_SECTION_EXIT(225, 230),
+      modulation: {
+        drawSpeed: { ...DINOSAURUS_DRUMS_SPEED, from: 218, until: 230 },
+      },
+    },
+
+    /* Strings shimmer — fills gap before guitar fields */
+    {
+      id: "dinosaurus_fields_strings",
+      file: "Dinosaurus_fields.svg",
+      ...DINOSAURUS_FIELDS_LIVING,
+      draw: { at: 200, until: 228 },
+      erase: DINOSAURUS_SECTION_EXIT(224, 230),
+      modulation: {
+        drawSpeed: { ...DINOSAURUS_STRINGS_SPEED, from: 200, until: 230 },
       },
     },
 
@@ -654,12 +724,19 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_fields_guitar",
       file: "Dinosaurus_fields.svg",
-      strategy: "organic-pool",
+      ...DINOSAURUS_FIELDS_GUITAR_LIVING,
       draw: { at: 225, until: 268 },
-      erase: { from: 262, until: 272 },
-      pool: DINOSAURUS_FIELDS_GUITAR,
+      erase: DINOSAURUS_SECTION_EXIT(262, 272),
       modulation: {
         drawSpeed: { ...DINOSAURUS_GUITAR_SPEED, from: 225, until: 272 },
+        inkBreath: {
+          source: "guitar",
+          from: 225,
+          until: 272,
+          energy: 0.38,
+          depthRange: [0.014, 0.034],
+          speed: 1.2,
+        },
       },
     },
 
@@ -668,60 +745,73 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_place_peak_1",
       file: "../autumnnights/autumnnights_place.svg",
-      ...DINOSAURUS_GUEST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 248, until: 278 },
-      erase: DINOSAURUS_DISSOLVE(378, 384),
+      erase: DINOSAURUS_SECTION_EXIT(274, 280),
       modulation: {
-        drawSpeed: { ...DINOSAURUS_PIANO_SPEED, from: 248, until: 278 },
+        drawSpeed: { ...DINOSAURUS_PIANO_SPEED, from: 248, until: 280 },
       },
     },
 
     {
       id: "dinosaurus_guest_dalia_peak",
       file: "../aquarel/aquarel_dalia.svg",
-      ...DINOSAURUS_GUEST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 262, until: 292 },
-      erase: DINOSAURUS_DISSOLVE(380, 386),
+      erase: DINOSAURUS_SECTION_EXIT(288, 294),
       modulation: {
-        drawSpeed: { ...DINOSAURUS_GUITAR_SPEED, from: 262, until: 292 },
+        drawSpeed: { ...DINOSAURUS_GUITAR_SPEED, from: 262, until: 294 },
       },
     },
 
     {
       id: "dinosaurus_guest_street_peak",
       file: "../samba/sambaberegelsmol_street.svg",
-      ...DINOSAURUS_GUEST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 275, until: 305 },
-      erase: DINOSAURUS_DISSOLVE(376, 382),
+      erase: DINOSAURUS_SECTION_EXIT(301, 307),
       modulation: {
-        drawSpeed: { ...DINOSAURUS_DRUMS_SPEED, from: 275, until: 305 },
+        drawSpeed: { ...DINOSAURUS_DRUMS_SPEED, from: 275, until: 307 },
       },
     },
 
-    /* ── 04:31 — homes return on top (additive) ──────────────── */
+    /* ── 04:31 — homes return on top (additive living) ───────── */
 
     {
       id: "dinosaurus_homes_overlay",
       file: "Dinosaurus_homes.svg",
-      ...DINOSAURUS_HOMES_OVERLAY,
-      draw: { at: 271, until: 318, naturalPace: true },
+      ...DINOSAURUS_HOMES_OVERLAY_LIVING,
+      draw: { at: 271, until: 355 },
       erase: DINOSAURUS_DISSOLVE(386, 394),
       modulation: {
-        drawSpeed: { ...DINOSAURUS_BASS_SPEED, from: 271, until: 318 },
+        drawSpeed: { ...DINOSAURUS_BASS_SPEED, from: 271, until: 355 },
+        inkBreath: {
+          source: "bass",
+          from: 271,
+          until: 355,
+          energy: 0.36,
+          depthRange: [0.01, 0.026],
+          speed: 0.95,
+        },
       },
     },
 
     {
+      id: "dinosaurus_all_peak",
       file: "Dinosaurus_all.svg",
-      strategy: "long-first",
-      draw: { at: 268, until: 328, naturalPace: true },
-      erase: DINOSAURUS_DISSOLVE(384, 392),
+      strategy: "living-cycle",
+      draw: { at: 268, until: 328 },
+      erase: DINOSAURUS_SECTION_EXIT(324, 332),
       pool: {
-        maxConcurrent: 3,
-        durationRange: [2.8, 7.8],
-        minDuration: 2.0,
-        staggerRange: [0.28, 0.85],
-        eraseDurationRange: [1.4, 4.2],
+        maxConcurrent: 2,
+        cyclesPerUnit: [2, 3],
+        finalClearSec: 2.8,
+        durationRange: [2.2, 5.8],
+        eraseDurationRange: [1.6, 4.0],
+        holdRange: [0.2, 0.65],
+        gapRange: [0.3, 0.9],
+        staggerRange: [0.25, 0.75],
+        minDuration: 1.5,
       },
       modulation: {
         drawSpeed: { ...DINOSAURUS_PIANO_SPEED, from: 268, until: 328 },
@@ -733,9 +823,14 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_riboa_return",
       file: "Dinosaurus_riboa.svg",
-      ...DINOSAURUS_EDGE_DENSE,
+      ...DINOSAURUS_LIVING_MID,
       draw: { at: 310, until: 352 },
-      erase: DINOSAURUS_DISSOLVE(383, 391),
+      erase: DINOSAURUS_SECTION_EXIT(348, 356),
+      pool: {
+        ...DINOSAURUS_LIVING_MID.pool,
+        maxConcurrent: 4,
+        cyclesPerUnit: [3, 4],
+      },
       modulation: {
         drawSpeed: { ...DINOSAURUS_DRUMS_SPEED, from: 310, until: 352 },
       },
@@ -746,16 +841,17 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_flute_lines_3",
       file: "../autumnnights/autumnnights_lines.svg",
-      ...DINOSAURUS_FLUTE_LINES,
+      ...DINOSAURUS_FLUTE_LIVING,
       draw: { at: 319, until: 355 },
       erase: DINOSAURUS_DISSOLVE(377, 384),
       pool: {
-        ...DINOSAURUS_FLUTE_LINES.pool,
+        ...DINOSAURUS_FLUTE_LIVING.pool,
         maxConcurrent: 4,
-        durationRange: [0.85, 2.8],
-        staggerRange: [0.14, 0.5],
+        durationRange: [1.0, 2.8],
+        staggerRange: [0.16, 0.55],
       },
       modulation: {
+        tremble: { ...DINOSAURUS_FLUTE_REACT.tremble, from: 319, until: 355 },
         drawSpeed: { ...DINOSAURUS_FLUTE_SPEED, from: 319, until: 355 },
       },
     },
@@ -763,31 +859,36 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_guest_place_peak_2",
       file: "../autumnnights/autumnnights_place.svg",
-      ...DINOSAURUS_GUEST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 328, until: 348 },
-      erase: DINOSAURUS_DISSOLVE(376, 381),
+      erase: DINOSAURUS_SECTION_EXIT(344, 350),
       modulation: {
-        drawSpeed: { ...DINOSAURUS_PIANO_SPEED, from: 328, until: 348 },
+        drawSpeed: { ...DINOSAURUS_PIANO_SPEED, from: 328, until: 350 },
       },
     },
 
     {
       id: "dinosaurus_guest_dalia_return",
       file: "../aquarel/aquarel_dalia.svg",
-      ...DINOSAURUS_GUEST,
+      ...DINOSAURUS_LIVING_GUEST,
       draw: { at: 335, until: 355 },
-      erase: DINOSAURUS_DISSOLVE(378, 383),
+      erase: DINOSAURUS_SECTION_EXIT(351, 357),
       modulation: {
-        drawSpeed: { ...DINOSAURUS_GUITAR_SPEED, from: 335, until: 355 },
+        drawSpeed: { ...DINOSAURUS_GUITAR_SPEED, from: 335, until: 357 },
       },
     },
 
     {
       id: "dinosaurus_street_return_2",
       file: "Dinosaurus_street.svg",
-      ...DINOSAURUS_EDGE_DENSE,
+      ...DINOSAURUS_LIVING_MID,
       draw: { at: 325, until: 365 },
-      erase: DINOSAURUS_DISSOLVE(381, 390),
+      erase: DINOSAURUS_SECTION_EXIT(361, 368),
+      pool: {
+        ...DINOSAURUS_LIVING_MID.pool,
+        maxConcurrent: 4,
+        cyclesPerUnit: [3, 5],
+      },
       modulation: {
         drawSpeed: { ...DINOSAURUS_DRUMS_SPEED, from: 325, until: 365 },
       },
@@ -796,15 +897,16 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_pesel_return",
       file: "Dinosaurus_pesel.svg",
-      ...DINOSAURUS_MONUMENT,
-      draw: { at: 338, until: 372, naturalPace: true },
+      ...DINOSAURUS_MONUMENT_LIVING,
+      draw: { at: 338, until: 372 },
       erase: DINOSAURUS_DISSOLVE(388, 395),
       pool: {
-        ...DINOSAURUS_MONUMENT.pool,
+        ...DINOSAURUS_MONUMENT_LIVING.pool,
         eraseDurationRange: DINOSAURUS_FINAL_ERASE_RANGE,
       },
       modulation: {
         drawSpeed: { ...DINOSAURUS_FLUTE_SPEED, from: 338, until: 372 },
+        tremble: { ...DINOSAURUS_FLUTE_REACT.tremble, from: 338, until: 372 },
       },
     },
 
@@ -813,8 +915,8 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_chaos_vocal_dalia_2",
       file: "../aquarel/aquarel_dalia.svg",
-      ...DINOSAURUS_VOCAL_CHAOS,
-      draw: { at: 350, until: 372 },
+      ...DINOSAURUS_LIVING_CHAOS,
+      draw: { at: 350, until: 375 },
       erase: DINOSAURUS_DISSOLVE(375, 380),
       modulation: {
         drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 350, until: 375 },
@@ -824,8 +926,8 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_chaos_vocal_place_2",
       file: "../autumnnights/autumnnights_place.svg",
-      ...DINOSAURUS_VOCAL_CHAOS,
-      draw: { at: 352, until: 374 },
+      ...DINOSAURUS_LIVING_CHAOS,
+      draw: { at: 352, until: 375 },
       erase: DINOSAURUS_DISSOLVE(376, 381),
       modulation: {
         drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 352, until: 375 },
@@ -835,7 +937,7 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_chaos_vocal_street_2",
       file: "../samba/sambaberegelsmol_street.svg",
-      ...DINOSAURUS_VOCAL_CHAOS,
+      ...DINOSAURUS_LIVING_CHAOS,
       draw: { at: 354, until: 375 },
       erase: DINOSAURUS_DISSOLVE(375, 380),
       modulation: {
@@ -846,16 +948,9 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_chaos_vocal_fields_2",
       file: "Dinosaurus_fields.svg",
-      strategy: "organic-pool",
+      ...DINOSAURUS_LIVING_CHAOS,
       draw: { at: 356, until: 375 },
       erase: DINOSAURUS_DISSOLVE(377, 382),
-      pool: {
-        ...DINOSAURUS_FIELDS_FAST,
-        maxConcurrent: 3,
-        durationRange: [0.65, 1.9],
-        staggerRange: [0.08, 0.32],
-        eraseDurationRange: [0.3, 0.85],
-      },
       modulation: {
         drawSpeed: { ...DINOSAURUS_VOCALS_SPEED, from: 356, until: 375 },
       },
@@ -864,7 +959,7 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_chaos_vocal_street_2b",
       file: "Dinosaurus_street.svg",
-      ...DINOSAURUS_VOCAL_CHAOS,
+      ...DINOSAURUS_LIVING_CHAOS,
       draw: { at: 358, until: 375 },
       erase: DINOSAURUS_DISSOLVE(378, 383),
       modulation: {
@@ -875,7 +970,7 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_chaos_vocal_dalia_2b",
       file: "../aquarel/aquarel_dalia.svg",
-      ...DINOSAURUS_VOCAL_CHAOS,
+      ...DINOSAURUS_LIVING_CHAOS,
       draw: { at: 360, until: 375 },
       erase: DINOSAURUS_DISSOLVE(375, 379),
       modulation: {
@@ -888,14 +983,14 @@ const DINOSAURUS_SCORE = {
     {
       id: "dinosaurus_fields_coda",
       file: "Dinosaurus_fields.svg",
-      strategy: "organic-pool",
-      draw: { at: 362, until: 388, naturalPace: true },
+      ...DINOSAURUS_FIELDS_LIVING,
+      draw: { at: 362, until: 388 },
       erase: DINOSAURUS_DISSOLVE(389, 396),
       pool: {
-        ...DINOSAURUS_FIELDS_FAST,
+        ...DINOSAURUS_FIELDS_LIVING.pool,
         maxConcurrent: 1,
-        speedRange: [0.38, 0.62],
-        durationRange: [2.0, 5.2],
+        cyclesPerUnit: [1, 2],
+        durationRange: [1.8, 4.5],
         eraseDurationRange: DINOSAURUS_FINAL_ERASE_RANGE,
       },
       modulation: {
@@ -918,6 +1013,13 @@ const DINOSAURUS_SCORE = {
       },
       modulation: {
         drawSpeed: { ...DINOSAURUS_FLUTE_SPEED, from: 370, until: 390 },
+        tremble: {
+          ...DINOSAURUS_FLUTE_REACT.tremble,
+          from: 370,
+          until: 396,
+          maxPx: 0.85,
+          energy: 0.55,
+        },
       },
     },
   ],
