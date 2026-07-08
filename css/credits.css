@@ -1,0 +1,187 @@
+/* ============================================================
+   CREDITS PAGE
+   Internal layout matches Home song blocks (Side A / style.css):
+   dot anchor · title top -11px right 25px · detail top 18px right 28px
+   Edit top / left / right on .credit-N only to move each block.
+   ============================================================ */
+
+.credits-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+/* ---------- ITEM BASE ---------- */
+
+.credit {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.credit:hover {
+  z-index: 2;
+}
+
+/* ---------- DOT — matches .song-dot (Side A anchor) ---------- */
+
+.credit-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: auto;
+  transform: translate(50%, -50%);
+  background: var(--dot-bg);
+  border: 2px solid var(--dot-border);
+  color: var(--dot-text);
+  transition:
+    background .18s ease,
+    color .18s ease,
+    border-color .18s ease;
+}
+
+.credit:hover .credit-dot {
+  background: var(--credit-color);
+  border-color: var(--credit-color);
+  color: var(--color-white);
+}
+
+/* ---------- TITLE — matches .song-name (Side A) ---------- */
+
+.credit-title {
+  position: absolute;
+  top: -11px;
+  right: 25px;
+  font-family: "VCDavid";
+  font-weight: 700;
+  font-size: 20pt;
+  line-height: 0.9;
+  color: var(--page-fg);
+  white-space: nowrap;
+  text-align: right;
+  transition: color .18s ease;
+}
+
+/* ---------- DETAIL — hidden until hover (matches Home song-credits) ---------- */
+
+.credit-detail {
+  position: absolute;
+  top: 18px;
+  right: 28px;
+  font-family: "SimplerMono", monospace;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--page-fg);
+  white-space: nowrap;
+  text-align: right;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .18s ease, visibility .18s ease;
+}
+
+.credit:hover .credit-title {
+  color: #1C1C1C;
+}
+
+.credit:hover .credit-detail {
+  opacity: 0.72;
+  visibility: visible;
+}
+
+/* ---------- COLORS — album palette ---------- */
+
+.credit-1 { --credit-color: #D66926; }
+.credit-2 { --credit-color: #DFD538; }
+.credit-3 { --credit-color: #2E5E36; }
+.credit-4 { --credit-color: #18326B; }
+.credit-5 { --credit-color: #0A090E; }
+.credit-6 { --credit-color: #B42111; }
+.credit-7 { --credit-color: #D66926; }
+.credit-8 { --credit-color: #2E5E36; }
+
+/* ============================================================
+   POSITIONS — edit top / left / right per block only
+   Anchor = numbered circle center (same as Home tracks)
+   ============================================================ */
+
+.credit-1 {
+  top: 189px;
+  right: 210px;
+}
+
+.credit-2 {
+  top: 470px;
+  right: 416px;
+}
+
+.credit-3 {
+  top: 660px;
+  right: 210px;
+}
+
+.credit-4 {
+  top: 282px;
+  left: 936px;
+}
+
+.credit-5 {
+  top: 188px;
+  left: 416px;
+}
+
+.credit-6 {
+  top: 470px;
+  left: 208px;
+}
+
+.credit-7 {
+  top: 566px;
+  left: 520px;
+}
+
+.credit-8 {
+  top: 754px;
+  left: 834px;
+}
+
+/* ============================================================
+   HOME / LYRICS → CREDITS TRANSITION
+   ============================================================ */
+
+html.credits-intro .credit {
+  transition: none !important;
+  opacity: 0;
+}
+
+html.credits-intro .credit-title,
+html.credits-intro .credit-detail {
+  opacity: 0;
+  visibility: hidden;
+}
+
+html.credits-intro.credits-reveal-titles .credit-title {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 360ms ease;
+}
+
+/* ============================================================
+   CREDITS → HOME TRANSITION
+   ============================================================ */
+
+body.credits-mode.is-home-exit .credit {
+  pointer-events: none;
+}
+
+body.credits-mode.is-home-exit .credit-title {
+  opacity: 0 !important;
+  transition: opacity 360ms ease;
+}
+
+body.credits-mode.is-home-exit-moving .credit {
+  transition: none !important;
+}

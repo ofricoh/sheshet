@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="he">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credits | ששת</title>
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/credits.css">
+
+  <script>
+    if (sessionStorage.getItem("sheshet_credits_transition") === "1") {
+      document.documentElement.classList.add("credits-intro");
+    }
+  </script>
+</head>
+
+<body class="credits-mode">
+
+  <div class="grid-layer">
+    <svg class="grid-svg"></svg>
+  </div>
+
+  <canvas id="traceCanvas" data-storage-key="sheshet_trace_credits" aria-hidden="true"></canvas>
+
+  <!-- TITLE -->
+
+  <div class="album-title">
+
+    <a href="index.html" class="album-letter taf-left active">
+      <img class="outline" src="assets/svg/sheshet_taf-left.svg" alt="">
+      <img class="filled" src="assets/svg/sheshet_taffill-left.svg" alt="">
+    </a>
+
+    <a href="about.html" class="album-letter shin-center">
+      <img class="outline" src="assets/svg/sheshet_shin-center.svg" alt="">
+      <img class="filled" src="assets/svg/sheshet_shinfill-center.svg" alt="">
+    </a>
+
+    <a href="lyrics.html" class="album-letter shin-right">
+      <img class="outline" src="assets/svg/sheshet_shin-right.svg" alt="">
+      <img class="filled" src="assets/svg/sheshet_shinfill-right.svg" alt="">
+    </a>
+
+  </div>
+
+  <!-- CREDITS -->
+
+  <section class="credits-wrapper">
+
+    <div class="credit credit-1">
+      <div class="credit-dot">1</div>
+      <div class="credit-title">עבודים</div>
+      <div class="credit-detail">ששת</div>
+    </div>
+
+    <div class="credit credit-2">
+      <div class="credit-dot">2</div>
+      <div class="credit-title">הפקה</div>
+      <div class="credit-detail">שם טוב לוי, דורית לנץ</div>
+    </div>
+
+    <div class="credit credit-3">
+      <div class="credit-dot">3</div>
+      <div class="credit-title">הקלטה</div>
+      <div class="credit-detail">אולפני טריטון 8/77–10/77</div>
+    </div>
+
+    <div class="credit credit-4">
+      <div class="credit-dot">4</div>
+      <div class="credit-title">טכנאי הקלטה</div>
+      <div class="credit-detail">טומי פרידמן, לואי להב</div>
+    </div>
+
+    <div class="credit credit-5">
+      <div class="credit-dot">5</div>
+      <div class="credit-title">עוזרת טכנאי</div>
+      <div class="credit-detail">אורית זולטוב</div>
+    </div>
+
+    <div class="credit credit-6">
+      <div class="credit-dot">6</div>
+      <div class="credit-title">צלומים</div>
+      <div class="credit-detail">ג׳ראר אלון</div>
+    </div>
+
+    <div class="credit credit-7">
+      <div class="credit-dot">7</div>
+      <div class="credit-title">עיצוב עטיפה</div>
+      <div class="credit-detail">דוד טרטקובר</div>
+    </div>
+
+    <div class="credit credit-8">
+      <div class="credit-dot">8</div>
+      <div class="credit-title">תודות</div>
+      <div class="credit-detail">
+        אלי בבג׳נוב, עידן רוזה<br>
+        עמרי ברגמן, שירה פלג<br>
+        טל נגל, עומר אלירז
+      </div>
+    </div>
+
+  </section>
+
+  <!-- FOOTER STICKERS -->
+
+  <div class="footer-sticker-left">
+    <img src="assets/images/stereo_footersticker.png" alt="">
+  </div>
+
+  <div class="footer-sticker-right">
+    <img src="assets/images/acum_footersticker.png" alt="">
+  </div>
+
+  <div class="footer-credits">
+    CBS are Trademarks of CBS Inc / ℗&© 1977 CBS, Inc / Manufactured and distributed by CBS Records Ltd. P.O.B 681, Tel Aviv, Israel / מיוצר ומופץ ע״י תקליטי סי בי אס בע״מ ת.ד 681 תל אביב / תוצרת ישראל
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/credits-transition.js"></script>
+  <script src="js/trace.js"></script>
+
+</body>
+
+</html>

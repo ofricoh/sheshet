@@ -66,6 +66,18 @@
       resonanceFollow: 0.35,
       slowFollow: 0.06,
     },
+    strings: {
+      smoothing: 0.52,
+      envelopeFollow: 0.4,
+      resonanceFollow: 0.48,
+      slowFollow: 0.09,
+    },
+    other: {
+      smoothing: 0.5,
+      envelopeFollow: 0.44,
+      resonanceFollow: 0.4,
+      slowFollow: 0.07,
+    },
   };
 
   function createAnalyser(options) {
@@ -84,6 +96,9 @@
     const isGuitar = profileName === "guitar";
     const isBass = profileName === "bass";
     const isPiano = profileName === "piano";
+    const isStrings = profileName === "strings";
+    const isOther = profileName === "other";
+    const isDrums = profileName === "drums";
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 2048;
     analyser.smoothingTimeConstant = profile.smoothing;
@@ -277,6 +292,57 @@
         out.dynamics = dynamics;
         out.piano = clamp01(
           live * 0.5 + transient * 0.34 + dynamics * 0.24
+        );
+      }
+
+      if (isStrings) {
+        const live = clamp01(
+          mid * 0.95 + hi * 0.55 + spectral * 0.42 + rms * 1.1
+        );
+        const transient = clamp01(
+          midFlux * 10 + hiJump * 8 + attack * 0.55
+        );
+        const dynamics = clamp01(
+          (live - slowEnvelope) / (slowEnvelope * 0.36 + 0.05)
+        );
+        out.live = live;
+        out.transient = transient;
+        out.dynamics = dynamics;
+        out.resonance = clamp01(
+          resonance * 0.45 + live * 0.35 + spectral * 0.2
+        );
+      }
+
+      if (isOther) {
+        const live = clamp01(
+          spectral * 0.82 + mid * 0.72 + hi * 0.28 + rms * 1.35
+        );
+        const transient = clamp01(
+          midFlux * 12 + rmsJump * 10 + attack * 0.65 + hiJump * 6
+        );
+        const dynamics = clamp01(
+          (live - slowEnvelope) / (slowEnvelope * 0.34 + 0.05)
+        );
+        out.live = live;
+        out.transient = transient;
+        out.dynamics = dynamics;
+      }
+
+      if (isDrums) {
+        const live = clamp01(
+          rms * 3.0 + hi * 0.62 + attack * 0.85 + hiJump * 8
+        );
+        const transient = clamp01(
+          rmsJump * 18 + hiJump * 14 + attack * 0.9
+        );
+        const dynamics = clamp01(
+          (live - slowEnvelope) / (slowEnvelope * 0.3 + 0.04)
+        );
+        out.live = live;
+        out.transient = transient;
+        out.dynamics = dynamics;
+        out.drums = clamp01(
+          live * 0.55 + transient * 0.32 + dynamics * 0.18
         );
       }
 

@@ -388,3 +388,12 @@ body.lyrics-mode.is-home-exit-moving .song .song-dot{
 body.is-home-exit.is-home-exit-moving .song{
   transition:none !important;
 }
+
+/* ============================================================
+   LYRICS → CREDITS TRANSITION
+   ============================================================ */
+
+body.is-credits-exit .lyrics-text{
+  opacity:0 !important;
+  transition:opacity 520ms ease;
+}

@@ -143,6 +143,12 @@ function initHomeLyricsExit() {
 
 /* -------------------- HOME ← LYRICS (enter) -------------------- */
 
+function storeAllCirclePositionsIfAvailable() {
+  if (typeof window.storeAllHomeCirclePositions === "function") {
+    window.storeAllHomeCirclePositions();
+  }
+}
+
 function finishHomeIntro() {
   document.documentElement.classList.remove(
     "home-intro",
@@ -157,6 +163,7 @@ function initHomeReveal() {
   if (!hasFlag) {
     finishHomeIntro();
     storeHomeCirclePositions();
+    storeAllCirclePositionsIfAvailable();
     return;
   }
 
@@ -166,6 +173,7 @@ function initHomeReveal() {
     () => {
       finishHomeIntro();
       storeHomeCirclePositions();
+      storeAllCirclePositionsIfAvailable();
     },
     LYRICS_TRANSITION.safetyMs
   );
@@ -178,6 +186,7 @@ function initHomeReveal() {
         window.clearTimeout(safety);
         finishHomeIntro();
         storeHomeCirclePositions();
+        storeAllCirclePositionsIfAvailable();
       }, LYRICS_TRANSITION.titleFadeMs);
     });
   });
