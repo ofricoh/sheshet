@@ -24,7 +24,6 @@ body.lyrics-mode .song-credits{
   visibility:visible;
 }
 
-/* Colored circles — visible only on the lyric insert (with titles). */
 body.lyrics-mode .song .song-dot{
   background:var(--song-color);
   border-color:var(--song-color);

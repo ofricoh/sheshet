@@ -60,7 +60,6 @@ function initAlbumFocus() {
 function initHomeAlbum() {
 
   initAlbumFocus();
-  applyListenedMarks();
 
 }
 

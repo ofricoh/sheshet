@@ -1,0 +1,139 @@
+/* ============================================================
+   PLOTTER TRANSPORT — shared playback bar (all song pages)
+   ============================================================ */
+
+.plotter-transport {
+  position: fixed;
+  left: 50%;
+  bottom: 12vh;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(28, 28, 28, 0.2);
+  border-radius: 2px;
+  pointer-events: auto;
+  transition: opacity 180ms ease;
+}
+
+.plotter-transport-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--page-fg, #1c1c1c);
+  cursor: pointer;
+  opacity: 0.82;
+  transition: opacity 0.18s ease;
+}
+
+.plotter-transport-btn:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.plotter-transport-btn:disabled {
+  opacity: 0.22;
+  cursor: default;
+}
+
+.plotter-transport-btn:focus-visible {
+  outline: 1px solid rgba(28, 28, 28, 0.35);
+  outline-offset: 2px;
+}
+
+.plotter-transport-btn[aria-busy="true"] {
+  opacity: 0.35;
+  cursor: wait;
+}
+
+/* ---------- icons ---------- */
+
+.plotter-transport-icon {
+  display: block;
+  box-sizing: border-box;
+}
+
+.plotter-transport-icon--prev,
+.plotter-transport-icon--next {
+  position: relative;
+  width: 11px;
+  height: 8px;
+}
+
+.plotter-transport-icon--prev::before,
+.plotter-transport-icon--prev::after,
+.plotter-transport-icon--next::before,
+.plotter-transport-icon--next::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 0;
+  height: 0;
+  margin-top: -4px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+
+.plotter-transport-icon--prev::before,
+.plotter-transport-icon--prev::after {
+  border-right: 5px solid currentColor;
+}
+
+.plotter-transport-icon--prev::before {
+  left: 0;
+}
+
+.plotter-transport-icon--prev::after {
+  left: 5px;
+}
+
+.plotter-transport-icon--next::before,
+.plotter-transport-icon--next::after {
+  border-left: 5px solid currentColor;
+}
+
+.plotter-transport-icon--next::before {
+  left: 0;
+}
+
+.plotter-transport-icon--next::after {
+  left: 5px;
+}
+
+.plotter-transport-icon--play {
+  width: 0;
+  height: 0;
+  border-top: 4.5px solid transparent;
+  border-bottom: 4.5px solid transparent;
+  border-left: 7px solid currentColor;
+  transform: translateX(0.5px);
+}
+
+.plotter-transport-icon--pause {
+  display: none;
+  width: 7px;
+  height: 8px;
+  border-left: 1.75px solid currentColor;
+  border-right: 1.75px solid currentColor;
+}
+
+.plotter-transport-btn--toggle[data-state="playing"] .plotter-transport-icon--play {
+  display: none;
+}
+
+.plotter-transport-btn--toggle[data-state="playing"] .plotter-transport-icon--pause {
+  display: block;
+}
+
+/* Dev-only — toggled from individual song scripts */
+.plotter-debug-timecode {
+  display: none !important;
+}

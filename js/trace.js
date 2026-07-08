@@ -1,7 +1,7 @@
 /* ============================================================
    MOUSE TRACE — thin freehand line following the cursor
    ------------------------------------------------------------
-   Lightweight sketch stroke. Persists in sessionStorage;
+   Lightweight sketch stroke. Optional sessionStorage persistence;
    long-press (~300 ms) clears the canvas.
    ============================================================ */
 
@@ -10,7 +10,29 @@
   if (!canvas) return;
 
   const STORAGE_KEY = canvas.dataset.storageKey || "sheshet_trace";
-  const TRACE_COLOR_DEFAULT = "#1C1C1C";
+  const shouldPersist = canvas.dataset.tracePersist !== "false";
+  const TRACE_OPACITY = Number(canvas.dataset.traceOpacity) || 1;
+
+  function readTraceColorDefault() {
+    const fromData = canvas.dataset.traceColor?.trim();
+    if (fromData) return fromData;
+
+    const simplerText = document.querySelector(
+      ".credit-detail, .footer-credits, .song-duration, .song-credits"
+    );
+
+    if (simplerText) {
+      const resolved = getComputedStyle(simplerText).color.trim();
+      if (resolved) return resolved;
+    }
+
+    return (
+      getComputedStyle(document.body).getPropertyValue("--page-fg").trim() ||
+      "#1C1C1C"
+    );
+  }
+
+  const TRACE_COLOR_DEFAULT = readTraceColorDefault();
   const TRACE_STROKE_WIDTH = 0.85;
   const MAX_POINTS = 8000;
   const ERASE_HOLD_MS = 300;
@@ -43,7 +65,7 @@
     context.lineWidth = TRACE_STROKE_WIDTH;
     context.lineCap = "round";
     context.lineJoin = "round";
-    context.globalAlpha = 1;
+    context.globalAlpha = TRACE_OPACITY;
     context.beginPath();
     context.moveTo(x1, y1);
     context.lineTo(x2, y2);
@@ -119,11 +141,16 @@
   }
 
   function persistTrace() {
+    if (!shouldPersist) return;
+
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(tracePoints));
   }
 
   function eraseTrace() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    if (shouldPersist) {
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
+
     tracePoints = [];
     if (ctx) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -168,14 +195,21 @@
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
-  const savedTrace = sessionStorage.getItem(STORAGE_KEY);
-  if (savedTrace) {
-    try {
-      tracePoints = JSON.parse(savedTrace).map(normalizeTracePoint);
-      redrawTrace();
-    } catch {
-      tracePoints = [];
+  if (shouldPersist) {
+    const savedTrace = sessionStorage.getItem(STORAGE_KEY);
+
+    if (savedTrace) {
+      try {
+        tracePoints = JSON.parse(savedTrace).map(normalizeTracePoint);
+        redrawTrace();
+      } catch {
+        tracePoints = [];
+      }
     }
+  } else {
+    sessionStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem("sheshet_trace_credits");
+    tracePoints = [];
   }
 
   document.addEventListener("mousedown", (event) => {

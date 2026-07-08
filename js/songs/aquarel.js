@@ -8,10 +8,10 @@
    ============================================================ */
 
 /** Dev-only live timecode (MM:SS:CS) beside the timeline. */
-const SHOW_DEBUG_TIMECODE = true;
+const SHOW_DEBUG_TIMECODE = false;
 
 /** Matches album track listing (6:47). */
-const AQUAREL_SPIN_DURATION_SEC = 407;
+const AQUAREL_SPIN_DURATION_SEC = 331;
 
 const AQUAREL_STYLE = {
   stroke: "#FAFAFA",
@@ -22,7 +22,10 @@ const AQUAREL_STYLE = {
 const AQUAREL_MAX_SILENCE_SEC = 2;
 
 /** Final strokes dissolve before the record ends. */
-const AQUAREL_FINAL_WIPE = { from: 406, until: 407 };
+const AQUAREL_FINAL_WIPE = { from: 402, until: 407 };
+
+/** Shared fade envelope for audio-driven modulation (seconds). */
+const AQUAREL_MOD_FADE = { fadeIn: 1.4, fadeOut: 1.8 };
 
 /** Stem-driven draw + ink reactions — restrained, pen-plotter calm. */
 const AQUAREL_FLUTE_REACT = {
@@ -71,7 +74,7 @@ const AQUAREL_GUITAR_REACT = {
         from: 0,
         until: 999,
         count: [1, 3],
-        blinkDuration: [0.04, 0.1],
+        blinkDuration: [0.1, 0.24],
         minGap: 0.32,
       },
     ],
@@ -194,7 +197,7 @@ const AQUAREL_DRUM_BURST = {
     durationRange: [0.12, 0.48],
     minDuration: 0.08,
     staggerRange: [0.02, 0.08],
-    eraseDurationRange: [0.1, 0.32],
+    eraseDurationRange: [0.25, 0.65],
   },
 };
 
@@ -206,20 +209,20 @@ const AQUAREL_PIANO_FAST = {
     durationRange: [0.18, 0.65],
     minDuration: 0.12,
     staggerRange: [0.03, 0.1],
-    eraseDurationRange: [0.12, 0.38],
+    eraseDurationRange: [0.3, 0.75],
   },
 };
 
-/** Kineret + deadsea — quick simultaneous clear at 00:37:00. */
+/** Kineret + deadsea — gradual dissolve centered on 00:37:00. */
 const AQUAREL_OPENING_VANISH = {
-  from: 37,
-  until: 37.65,
+  from: 34,
+  until: 40,
 };
 
-/** Bus + work — fast clear between 00:46:00 and 00:48:00. */
+/** Bus + work — gentle clear around 00:46:00. */
 const AQUAREL_BUS_WORK_CLEAR = {
-  from: 46,
-  until: 48,
+  from: 44.5,
+  until: 49.5,
 };
 
 /** Shared pen settings so bus + work feel like one composition. */
@@ -230,26 +233,26 @@ const AQUAREL_BUS_WORK_LAYER = {
     durationRange: [1.0, 3.2],
     minDuration: 0.6,
     staggerRange: [0.18, 0.7],
-    eraseDurationRange: [0.14, 0.42],
+    eraseDurationRange: [0.45, 1.2],
   },
 };
 
-/** Shimshit → rounds handoff at 01:24:00. */
+/** Shimshit → rounds handoff around 01:24:00. */
 const AQUAREL_SHIMSHIT_HANDOFF = {
-  from: 84,
-  until: 84.55,
+  from: 81,
+  until: 86.5,
 };
 
-/** Telaviv → ashdod handoff at 01:46:00. */
+/** Telaviv → ashdod handoff around 01:46:00. */
 const AQUAREL_TELAVIV_HANDOFF = {
-  from: 106,
-  until: 106.5,
+  from: 103.5,
+  until: 108.5,
 };
 
-/** Ashdod disappears completely at 02:21:00. */
+/** Ashdod fades out around 02:21:00. */
 const AQUAREL_ASHDOD_EXIT = {
-  from: 141,
-  until: 141.35,
+  from: 138,
+  until: 143.5,
 };
 
 /* ============================================================
@@ -289,7 +292,7 @@ const AQUAREL_MEMORY = {
     durationRange: [1.6, 3.0],
     minDuration: 1.1,
     staggerRange: [0.5, 1.4],
-    eraseDurationRange: [0.6, 1.9],
+    eraseDurationRange: [0.8, 2.2],
   },
 };
 
@@ -304,7 +307,7 @@ const AQUAREL_MEMORY_FLUTE = {
     durationRange: [2.2, 4.6],
     minDuration: 1.4,
     staggerRange: [0.4, 1.0],
-    eraseDurationRange: [0.5, 1.4],
+    eraseDurationRange: [0.7, 1.8],
   },
 };
 
@@ -328,10 +331,10 @@ const AQUAREL_SCORE = {
         durationRange: [7.2, 8.6],
         minDuration: 6.8,
         staggerRange: [0.35, 1.0],
-        eraseDurationRange: [0.12, 0.35],
+        eraseDurationRange: [0.55, 1.6],
       },
       modulation: {
-        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 0, until: 37 },
+        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 0, until: 40, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -347,11 +350,11 @@ const AQUAREL_SCORE = {
         durationRange: [2.8, 6.2],
         minDuration: 2.0,
         staggerRange: [0.45, 1.35],
-        eraseDurationRange: [0.12, 0.35],
+        eraseDurationRange: [0.55, 1.6],
       },
       modulation: {
-        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 9, until: 37 },
-        drawSpeed: { ...AQUAREL_OTHER_REACT.drawSpeed, from: 20, until: 37 },
+        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 9, until: 40, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_OTHER_REACT.drawSpeed, from: 20, until: 40, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -362,8 +365,8 @@ const AQUAREL_SCORE = {
       draw: { at: 37, until: 46 },
       erase: AQUAREL_BUS_WORK_CLEAR,
       modulation: {
-        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 38, until: 48 },
-        drawSpeed: { ...AQUAREL_BASS_REACT.drawSpeed, from: 39, until: 48 },
+        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 38, until: 50, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_BASS_REACT.drawSpeed, from: 39, until: 50, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -374,8 +377,8 @@ const AQUAREL_SCORE = {
       draw: { at: 37, until: 46 },
       erase: AQUAREL_BUS_WORK_CLEAR,
       modulation: {
-        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 38, until: 48 },
-        drawSpeed: { ...AQUAREL_GUITAR_REACT.drawSpeed, from: 47, until: 48 },
+        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 38, until: 50, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_GUITAR_REACT.drawSpeed, from: 47, until: 50, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -392,11 +395,11 @@ const AQUAREL_SCORE = {
         durationRange: [3.0, 6.8],
         minDuration: 2.2,
         staggerRange: [0.5, 1.15],
-        eraseDurationRange: [0.28, 0.75],
+        eraseDurationRange: [0.45, 1.15],
       },
       modulation: {
-        drawSpeed: { ...AQUAREL_GUITAR_REACT.drawSpeed, from: 48, until: 84 },
-        inkBreath: { ...AQUAREL_BASS_REACT.inkBreath, from: 48, until: 84 },
+        drawSpeed: { ...AQUAREL_GUITAR_REACT.drawSpeed, from: 48, until: 87, ...AQUAREL_MOD_FADE },
+        inkBreath: { ...AQUAREL_BASS_REACT.inkBreath, from: 48, until: 87, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -405,18 +408,18 @@ const AQUAREL_SCORE = {
       file: "aquarel_rounds.svg",
       strategy: "edge-stagger",
       draw: { at: 84, until: 92 },
-      erase: { from: 86, until: 105 },
+      erase: { from: 84.5, until: 106 },
       pool: {
         maxConcurrent: 3,
         durationRange: [1.2, 3.4],
         minDuration: 0.75,
         staggerRange: [0.25, 0.85],
-        eraseDurationRange: [0.55, 1.65],
+        eraseDurationRange: [0.65, 2.0],
       },
       modulation: {
-        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 84, until: 105 },
-        drawSpeed: { ...AQUAREL_FLUTE_REACT.drawSpeed, from: 88, until: 105 },
-        tremble: { ...AQUAREL_FLUTE_REACT.tremble, from: 88, until: 105 },
+        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 84, until: 106, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_FLUTE_REACT.drawSpeed, from: 88, until: 106, ...AQUAREL_MOD_FADE },
+        tremble: { ...AQUAREL_FLUTE_REACT.tremble, from: 88, until: 106, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -431,12 +434,12 @@ const AQUAREL_SCORE = {
         durationRange: [1.4, 4.0],
         minDuration: 0.85,
         staggerRange: [0.3, 0.95],
-        eraseDurationRange: [0.18, 0.48],
+        eraseDurationRange: [0.45, 1.25],
       },
       modulation: {
-        inkBreath: { ...AQUAREL_GUITAR_REACT.inkBreath, from: 86, until: 106 },
-        drawSpeed: { ...AQUAREL_FLUTE_REACT.drawSpeed, from: 90, until: 106 },
-        tremble: { ...AQUAREL_FLUTE_REACT.tremble, from: 90, until: 106 },
+        inkBreath: { ...AQUAREL_GUITAR_REACT.inkBreath, from: 86, until: 109, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_FLUTE_REACT.drawSpeed, from: 90, until: 109, ...AQUAREL_MOD_FADE },
+        tremble: { ...AQUAREL_FLUTE_REACT.tremble, from: 90, until: 109, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -452,12 +455,12 @@ const AQUAREL_SCORE = {
         durationRange: [2.6, 6.4],
         minDuration: 1.9,
         staggerRange: [0.4, 1.2],
-        eraseDurationRange: [0.08, 0.22],
+        eraseDurationRange: [0.5, 1.4],
       },
       modulation: {
-        inkBreath: { ...AQUAREL_BASS_REACT.inkBreath, from: 106, until: 141 },
-        drawSpeed: { ...AQUAREL_GUITAR_REACT.drawSpeed, from: 112, until: 141 },
-        tremble: { ...AQUAREL_STRINGS_REACT.tremble, from: 128, until: 141 },
+        inkBreath: { ...AQUAREL_BASS_REACT.inkBreath, from: 106, until: 144, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_GUITAR_REACT.drawSpeed, from: 112, until: 144, ...AQUAREL_MOD_FADE },
+        tremble: { ...AQUAREL_STRINGS_REACT.tremble, from: 128, until: 144, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -477,7 +480,7 @@ const AQUAREL_SCORE = {
       file: "../inbalim/inbalim_water.svg",
       ...AQUAREL_MEMORY,
       draw: { at: 20, until: 32 },
-      erase: { from: 33, until: 36.4 },
+      erase: { from: 31.5, until: 39 },
     },
 
     /* Memory B — a bus from Seven-Eight at the arrival.
@@ -489,7 +492,7 @@ const AQUAREL_SCORE = {
       file: "../seveneight/seveneight_bus.svg",
       ...AQUAREL_GUEST,
       draw: { at: 38, until: 45.5 },
-      erase: { from: 46, until: 48 },
+      erase: AQUAREL_BUS_WORK_CLEAR,
     },
 
     /* Memory C — Autumn Nights' wave, breathing with the wind stem.
@@ -501,10 +504,10 @@ const AQUAREL_SCORE = {
       file: "../autumnnights/autumnnights_wave.svg",
       ...AQUAREL_MEMORY_FLUTE,
       draw: { at: 84, until: 118 },
-      erase: { from: 120, until: 128 },
+      erase: { from: 117, until: 130 },
       modulation: {
-        tremble: { ...AQUAREL_FLUTE_REACT.tremble, from: 84, until: 128 },
-        drawSpeed: { ...AQUAREL_FLUTE_REACT.drawSpeed, from: 84, until: 128 },
+        tremble: { ...AQUAREL_FLUTE_REACT.tremble, from: 84, until: 130, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_FLUTE_REACT.drawSpeed, from: 84, until: 130, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -517,9 +520,9 @@ const AQUAREL_SCORE = {
       file: "../inbalim/inbalim_rounds.svg",
       ...AQUAREL_GUEST,
       draw: { at: 88, until: 101 },
-      erase: { from: 101, until: 106 },
+      erase: { from: 99, until: 109 },
       modulation: {
-        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 88, until: 106 },
+        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 88, until: 109, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -531,16 +534,16 @@ const AQUAREL_SCORE = {
       file: "../autumnnights/autumnnights_kvish.svg",
       ...AQUAREL_GUEST,
       draw: { at: 112, until: 130 },
-      erase: { from: 131, until: 139.5 },
+      erase: { from: 129, until: 142 },
       pool: {
         ...AQUAREL_GUEST.pool,
         durationRange: [1.4, 3.6],
         eraseDurationRange: [0.7, 2.0],
       },
       modulation: {
-        drawSpeed: { ...AQUAREL_GUITAR_REACT.drawSpeed, from: 112, until: 140 },
-        inkBreath: { ...AQUAREL_GUITAR_REACT.inkBreath, from: 112, until: 140 },
-        flicker: { ...AQUAREL_GUITAR_REACT.flicker, from: 118, until: 140 },
+        drawSpeed: { ...AQUAREL_GUITAR_REACT.drawSpeed, from: 112, until: 142, ...AQUAREL_MOD_FADE },
+        inkBreath: { ...AQUAREL_GUITAR_REACT.inkBreath, from: 112, until: 142, ...AQUAREL_MOD_FADE },
+        flicker: { ...AQUAREL_GUITAR_REACT.flicker, from: 118, until: 142, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -552,19 +555,19 @@ const AQUAREL_SCORE = {
       file: "aquarel_kineret.svg",
       strategy: "organic-pool",
       draw: { at: 140, until: 180, naturalPace: true },
-      erase: { from: 184, until: 192 },
+      erase: { from: 182, until: 194 },
       pool: {
         maxConcurrent: 1,
         speedRange: [0.85, 1.0],
         durationRange: [8.0, 10.0],
         minDuration: 7.0,
         staggerRange: [0.4, 1.0],
-        eraseDurationRange: [0.4, 1.1],
+        eraseDurationRange: [0.65, 1.6],
       },
       modulation: {
-        drawSpeed: { ...AQUAREL_BASS_REACT.drawSpeed, from: 140, until: 192 },
-        inkBreath: { ...AQUAREL_BASS_REACT.inkBreath, from: 146, until: 192 },
-        tremble: { ...AQUAREL_STRINGS_REACT.tremble, from: 146, until: 192 },
+        drawSpeed: { ...AQUAREL_BASS_REACT.drawSpeed, from: 140, until: 194, ...AQUAREL_MOD_FADE },
+        inkBreath: { ...AQUAREL_BASS_REACT.inkBreath, from: 146, until: 194, ...AQUAREL_MOD_FADE },
+        tremble: { ...AQUAREL_STRINGS_REACT.tremble, from: 146, until: 194, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -575,15 +578,15 @@ const AQUAREL_SCORE = {
       file: "../autumnnights/autumnnights_wave.svg",
       ...AQUAREL_MEMORY,
       draw: { at: 154, until: 182 },
-      erase: { from: 183, until: 192 },
+      erase: { from: 181, until: 194 },
       pool: {
         ...AQUAREL_MEMORY.pool,
         maxConcurrent: 2,
         durationRange: [2.0, 4.0],
       },
       modulation: {
-        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 154, until: 192 },
-        drawSpeed: { ...AQUAREL_OTHER_REACT.drawSpeed, from: 160, until: 192 },
+        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 154, until: 194, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_OTHER_REACT.drawSpeed, from: 160, until: 194, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -595,9 +598,9 @@ const AQUAREL_SCORE = {
       file: "../inbalim/inbalim_water.svg",
       ...AQUAREL_MEMORY,
       draw: { at: 192, until: 214 },
-      erase: { from: 216, until: 228 },
+      erase: { from: 214, until: 230 },
       modulation: {
-        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 192, until: 228 },
+        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 192, until: 230, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -611,18 +614,18 @@ const AQUAREL_SCORE = {
       file: "aquarel_dalia.svg",
       strategy: "organic-pool",
       draw: { at: 224, until: 268, naturalPace: true },
-      erase: { from: 270, until: 276 },
+      erase: { from: 268, until: 278 },
       pool: {
         maxConcurrent: 2,
         speedRange: [0.44, 0.68],
         durationRange: [2.4, 5.8],
         minDuration: 1.8,
         staggerRange: [0.35, 1.1],
-        eraseDurationRange: [0.35, 0.95],
+        eraseDurationRange: [0.55, 1.4],
       },
       modulation: {
-        inkBreath: { ...AQUAREL_BASS_REACT.inkBreath, from: 224, until: 276 },
-        drawSpeed: { ...AQUAREL_OTHER_REACT.drawSpeed, from: 248, until: 276 },
+        inkBreath: { ...AQUAREL_BASS_REACT.inkBreath, from: 224, until: 278, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_OTHER_REACT.drawSpeed, from: 248, until: 278, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -631,18 +634,18 @@ const AQUAREL_SCORE = {
       file: "aquarel_eilat.svg",
       strategy: "organic-pool",
       draw: { at: 248, until: 298, naturalPace: true },
-      erase: { from: 300, until: 306 },
+      erase: { from: 298, until: 310 },
       pool: {
         maxConcurrent: 2,
         speedRange: [0.5, 0.74],
         durationRange: [2.2, 5.4],
         minDuration: 1.6,
         staggerRange: [0.3, 0.95],
-        eraseDurationRange: [0.3, 0.85],
+        eraseDurationRange: [0.5, 1.3],
       },
       modulation: {
-        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 248, until: 306 },
-        tremble: { ...AQUAREL_STRINGS_REACT.tremble, from: 260, until: 306 },
+        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 248, until: 310, ...AQUAREL_MOD_FADE },
+        tremble: { ...AQUAREL_STRINGS_REACT.tremble, from: 260, until: 310, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -652,9 +655,9 @@ const AQUAREL_SCORE = {
       file: "../autumnnights/autumnnights_wave.svg",
       ...AQUAREL_MEMORY,
       draw: { at: 252, until: 282 },
-      erase: { from: 284, until: 292 },
+      erase: { from: 282, until: 294 },
       modulation: {
-        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 252, until: 292 },
+        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 252, until: 294, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -664,10 +667,10 @@ const AQUAREL_SCORE = {
       file: "aquarel_rounds.svg",
       ...AQUAREL_DRUM_BURST,
       draw: { at: 304, until: 332 },
-      erase: { from: 334, until: 340 },
+      erase: { from: 332, until: 344 },
       modulation: {
-        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 304, until: 340 },
-        drawSpeed: { ...AQUAREL_DRUM_REACT.drawSpeed, from: 304, until: 340 },
+        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 304, until: 344, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_DRUM_REACT.drawSpeed, from: 304, until: 344, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -677,17 +680,17 @@ const AQUAREL_SCORE = {
       file: "aquarel_work.svg",
       strategy: "edge-stagger",
       draw: { at: 314, until: 342 },
-      erase: { from: 344, until: 350 },
+      erase: { from: 342, until: 354 },
       pool: {
         maxConcurrent: 3,
         durationRange: [0.8, 2.4],
         minDuration: 0.55,
         staggerRange: [0.12, 0.45],
-        eraseDurationRange: [0.2, 0.55],
+        eraseDurationRange: [0.45, 1.1],
       },
       modulation: {
-        inkBreath: { ...AQUAREL_BASS_REACT.inkBreath, from: 314, until: 350 },
-        drawSpeed: { ...AQUAREL_BASS_REACT.drawSpeed, from: 314, until: 350 },
+        inkBreath: { ...AQUAREL_BASS_REACT.inkBreath, from: 314, until: 354, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_BASS_REACT.drawSpeed, from: 314, until: 354, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -697,10 +700,10 @@ const AQUAREL_SCORE = {
       file: "aquarel_telaviv.svg",
       ...AQUAREL_PIANO_FAST,
       draw: { at: 336, until: 364 },
-      erase: { from: 366, until: 372 },
+      erase: { from: 364, until: 376 },
       modulation: {
-        drawSpeed: { ...AQUAREL_PIANO_REACT.drawSpeed, from: 336, until: 372 },
-        inkBreath: { ...AQUAREL_PIANO_REACT.inkBreath, from: 336, until: 372 },
+        drawSpeed: { ...AQUAREL_PIANO_REACT.drawSpeed, from: 336, until: 376, ...AQUAREL_MOD_FADE },
+        inkBreath: { ...AQUAREL_PIANO_REACT.inkBreath, from: 336, until: 376, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -710,10 +713,10 @@ const AQUAREL_SCORE = {
       file: "aquarel_bus.svg",
       ...AQUAREL_DRUM_BURST,
       draw: { at: 340, until: 368 },
-      erase: { from: 370, until: 376 },
+      erase: { from: 368, until: 380 },
       modulation: {
-        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 340, until: 376 },
-        drawSpeed: { ...AQUAREL_PIANO_REACT.drawSpeed, from: 345, until: 376 },
+        inkBreath: { ...AQUAREL_DRUM_REACT.inkBreath, from: 340, until: 380, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_PIANO_REACT.drawSpeed, from: 345, until: 380, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -723,18 +726,18 @@ const AQUAREL_SCORE = {
       file: "aquarel_ashdod.svg",
       strategy: "edge-stagger",
       draw: { at: 346, until: 374 },
-      erase: { from: 376, until: 382 },
+      erase: { from: 374, until: 386 },
       pool: {
         maxConcurrent: 3,
         durationRange: [0.9, 2.8],
         minDuration: 0.6,
         staggerRange: [0.15, 0.5],
-        eraseDurationRange: [0.22, 0.6],
+        eraseDurationRange: [0.45, 1.2],
       },
       modulation: {
-        drawSpeed: { ...AQUAREL_GUITAR_REACT.drawSpeed, from: 346, until: 382 },
-        inkBreath: { ...AQUAREL_GUITAR_REACT.inkBreath, from: 346, until: 382 },
-        flicker: { ...AQUAREL_GUITAR_REACT.flicker, from: 350, until: 382 },
+        drawSpeed: { ...AQUAREL_GUITAR_REACT.drawSpeed, from: 346, until: 386, ...AQUAREL_MOD_FADE },
+        inkBreath: { ...AQUAREL_GUITAR_REACT.inkBreath, from: 346, until: 386, ...AQUAREL_MOD_FADE },
+        flicker: { ...AQUAREL_GUITAR_REACT.flicker, from: 350, until: 386, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -744,7 +747,7 @@ const AQUAREL_SCORE = {
       file: "aquarel_shimshit.svg",
       strategy: "flute-living",
       draw: { at: 368, until: 398 },
-      erase: { from: 400, until: 404 },
+      erase: { from: 398, until: 406 },
       pool: {
         maxConcurrent: 2,
         drawWindow: 24,
@@ -752,11 +755,11 @@ const AQUAREL_SCORE = {
         durationRange: [2.4, 5.6],
         minDuration: 1.8,
         staggerRange: [0.4, 1.0],
-        eraseDurationRange: [0.35, 0.85],
+        eraseDurationRange: [0.5, 1.3],
       },
       modulation: {
-        tremble: { ...AQUAREL_FLUTE_REACT.tremble, from: 368, until: 404 },
-        drawSpeed: { ...AQUAREL_FLUTE_REACT.drawSpeed, from: 368, until: 404 },
+        tremble: { ...AQUAREL_FLUTE_REACT.tremble, from: 368, until: 406, ...AQUAREL_MOD_FADE },
+        drawSpeed: { ...AQUAREL_FLUTE_REACT.drawSpeed, from: 368, until: 406, ...AQUAREL_MOD_FADE },
       },
     },
 
@@ -773,11 +776,11 @@ const AQUAREL_SCORE = {
         durationRange: [6.5, 9.0],
         minDuration: 5.5,
         staggerRange: [0.3, 0.8],
-        eraseDurationRange: [0.25, 0.7],
+        eraseDurationRange: [0.55, 1.5],
       },
       modulation: {
-        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 388, until: 407 },
-        tremble: { ...AQUAREL_FLUTE_REACT.tremble, from: 396, until: 407, maxPx: 0.65 },
+        inkBreath: { ...AQUAREL_OTHER_REACT.inkBreath, from: 388, until: 407, ...AQUAREL_MOD_FADE },
+        tremble: { ...AQUAREL_FLUTE_REACT.tremble, from: 396, until: 407, maxPx: 0.65, ...AQUAREL_MOD_FADE },
       },
     },
   ],
@@ -792,7 +795,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (SHOW_DEBUG_TIMECODE && audio && window.PlotterDebugTimecode) {
     PlotterDebugTimecode.attach({
       audio,
-      anchor: document.querySelector(".plotter-timeline-wrap"),
+      anchor: document.body,
+      placement: "append",
     });
   }
 
@@ -830,8 +834,6 @@ document.addEventListener("DOMContentLoaded", () => {
       audio,
       analysisStems,
       playButton: playBtn,
-      pauseButton: document.getElementById("pauseBtn"),
-      timeline: document.getElementById("timeline"),
       spinElement: document.getElementById("plotterSpinGroup"),
       spinDurationSec: AQUAREL_SPIN_DURATION_SEC,
     },
@@ -851,11 +853,4 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-  if (playBtn) {
-    playBtn.addEventListener("click", () => {
-      if (typeof markTrackListened === "function") {
-        markTrackListened("track-a2");
-      }
-    });
-  }
 });

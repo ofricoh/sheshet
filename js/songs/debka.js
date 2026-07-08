@@ -7,10 +7,10 @@
    ============================================================ */
 
 /** Dev-only live timecode (MM:SS:CS) beside the timeline. */
-const SHOW_DEBUG_TIMECODE = true;
+const SHOW_DEBUG_TIMECODE = false;
 
 /** Matches audio file duration (~6:16). */
-const DEBKA_SPIN_DURATION_SEC = 376;
+const DEBKA_SPIN_DURATION_SEC = 305;
 
 const DEBKA_STYLE = {
   stroke: "#FAFAFA",
@@ -1549,7 +1549,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (SHOW_DEBUG_TIMECODE && audio && window.PlotterDebugTimecode) {
     PlotterDebugTimecode.attach({
       audio,
-      anchor: document.querySelector(".plotter-timeline-wrap"),
+      anchor: document.body,
+      placement: "append",
     });
   }
 
@@ -1581,8 +1582,6 @@ document.addEventListener("DOMContentLoaded", () => {
       audio,
       analysisStems,
       playButton: playBtn,
-      pauseButton: document.getElementById("pauseBtn"),
-      timeline: document.getElementById("timeline"),
       spinElement: document.getElementById("plotterSpinGroup"),
       spinDurationSec: DEBKA_SPIN_DURATION_SEC,
     },
@@ -1602,11 +1601,4 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-  if (playBtn) {
-    playBtn.addEventListener("click", () => {
-      if (typeof markTrackListened === "function") {
-        markTrackListened("track-b2");
-      }
-    });
-  }
 });

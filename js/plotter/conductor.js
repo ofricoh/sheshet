@@ -59,7 +59,7 @@
   function layerActiveAt(bounds, layerId, t) {
     const window = bounds.get(layerId);
     if (!window) return true;
-    return t >= window.min - 0.05 && t <= window.max + 0.05;
+    return t >= window.min - 0.5 && t <= window.max + 0.5;
   }
 
   /** Active draw spec for living-cycle layers (pen direction changes per pass). */

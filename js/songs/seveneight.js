@@ -6,10 +6,10 @@
    ============================================================ */
 
 /** Dev-only live timecode (MM:SS:CS) beside the timeline. */
-const SHOW_DEBUG_TIMECODE = true;
+const SHOW_DEBUG_TIMECODE = false;
 
 /** Matches album track listing (4:09). */
-const SEVENEIGHT_SPIN_DURATION_SEC = 249;
+const SEVENEIGHT_SPIN_DURATION_SEC = 203;
 
 const SEVENEIGHT_STYLE = {
   stroke: "#FAFAFA",
@@ -407,7 +407,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (SHOW_DEBUG_TIMECODE && audio && window.PlotterDebugTimecode) {
     PlotterDebugTimecode.attach({
       audio,
-      anchor: document.querySelector(".plotter-timeline-wrap"),
+      anchor: document.body,
+      placement: "append",
     });
   }
 
@@ -430,8 +431,6 @@ document.addEventListener("DOMContentLoaded", () => {
       audio,
       analysisStems,
       playButton: playBtn,
-      pauseButton: document.getElementById("pauseBtn"),
-      timeline: document.getElementById("timeline"),
       spinElement: document.getElementById("plotterSpinGroup"),
       spinDurationSec: SEVENEIGHT_SPIN_DURATION_SEC,
     },
@@ -451,11 +450,4 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-  if (playBtn) {
-    playBtn.addEventListener("click", () => {
-      if (typeof markTrackListened === "function") {
-        markTrackListened("track-a4");
-      }
-    });
-  }
 });

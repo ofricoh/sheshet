@@ -8,10 +8,10 @@
    ============================================================ */
 
 /** Dev-only live timecode (MM:SS:CS) beside the timeline. */
-const SHOW_DEBUG_TIMECODE = true;
+const SHOW_DEBUG_TIMECODE = false;
 
 /** Matches audio file duration (~6:38). */
-const DINOSAURUS_SPIN_DURATION_SEC = 398;
+const DINOSAURUS_SPIN_DURATION_SEC = 323;
 
 const DINOSAURUS_STYLE = {
   stroke: "#FAFAFA",
@@ -706,7 +706,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (SHOW_DEBUG_TIMECODE && audio && window.PlotterDebugTimecode) {
     PlotterDebugTimecode.attach({
       audio,
-      anchor: document.querySelector(".plotter-timeline-wrap"),
+      anchor: document.body,
+      placement: "append",
     });
   }
 
@@ -742,8 +743,6 @@ document.addEventListener("DOMContentLoaded", () => {
       audio,
       analysisStems,
       playButton: playBtn,
-      pauseButton: document.getElementById("pauseBtn"),
-      timeline: document.getElementById("timeline"),
       spinElement: document.getElementById("plotterSpinGroup"),
       spinDurationSec: DINOSAURUS_SPIN_DURATION_SEC,
     },
@@ -763,11 +762,4 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-  if (playBtn) {
-    playBtn.addEventListener("click", () => {
-      if (typeof markTrackListened === "function") {
-        markTrackListened("track-b3");
-      }
-    });
-  }
 });

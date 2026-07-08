@@ -20,6 +20,29 @@
     return a + (b - a) * t;
   }
 
+  function smoothstep(u) {
+    const t = clamp01(u);
+    return t * t * (3 - 2 * t);
+  }
+
+  /** 0→1 envelope with smooth fade-in/out at cfg.from / cfg.until boundaries. */
+  function resolveModulationEnvelope(t, cfg) {
+    const from = cfg.from ?? 0;
+    const until = cfg.until ?? Infinity;
+    const fadeIn = cfg.fadeIn ?? cfg.rampIn ?? 1.2;
+    const fadeOut = cfg.fadeOut ?? cfg.rampOut ?? 1.2;
+
+    if (t < from || t > until) return 0;
+
+    let mix = 1;
+    if (fadeIn > 0 && t < from + fadeIn) {
+      mix = smoothstep((t - from) / fadeIn);
+    } else if (fadeOut > 0 && t > until - fadeOut) {
+      mix = smoothstep((until - t) / fadeOut);
+    }
+    return mix;
+  }
+
   function hashUnitId(id) {
     let h = 0;
     const s = String(id || "");
@@ -175,19 +198,24 @@
   /** Smooth ramp from idle background motion to full waveform intensity. */
   function resolveInkBreathIntensity(t, cfg) {
     const from = cfg.from ?? 0;
-    const until = cfg.until ?? Infinity;
-    if (t < from || t >= until) return 0;
+    if (t < from) return 0;
+
+    const envelope = resolveModulationEnvelope(t, cfg);
+    if (envelope <= 0) return 0;
 
     const idle = cfg.intensityIdle ?? 0.2;
     const rampFrom = cfg.rampFrom ?? cfg.buildFrom ?? from;
     const rampUntil = cfg.rampUntil ?? cfg.buildUntil ?? rampFrom + 4;
 
-    if (t <= rampFrom) return idle;
-    if (t >= rampUntil) return 1;
+    let core = 1;
+    if (t <= rampFrom) core = idle;
+    else if (t >= rampUntil) core = 1;
+    else {
+      const u = clamp01((t - rampFrom) / Math.max(0.001, rampUntil - rampFrom));
+      core = lerp(idle, 1, smoothstep(u));
+    }
 
-    const u = clamp01((t - rampFrom) / Math.max(0.001, rampUntil - rampFrom));
-    const eased = u * u * (3 - 2 * u);
-    return lerp(idle, 1, eased);
+    return core * envelope;
   }
 
   function inkBreathWave(t, unitId, speed, cfg) {
@@ -311,8 +339,8 @@
   function updateFlicker(state, layerId, lh, schedMap, t, cfg, guitarAudio) {
     if (!cfg || !guitarAudio) return;
 
-    for (const [id, end] of state.active) {
-      if (t >= end) state.active.delete(id);
+    for (const [id, flick] of state.active) {
+      if (t >= flick.end) state.active.delete(id);
     }
 
     const attack =
@@ -360,7 +388,7 @@
 
       const chosen = pickUnits(pickFrom, count, t * 13.1 + state.burstCount);
       for (const id of chosen) {
-        state.active.set(id, t + blink);
+        state.active.set(id, { start: t, end: t + blink });
         markRecent(state.recent, id, cfg.recentMemory ?? 24);
       }
 
@@ -469,20 +497,27 @@
         if (!lh || !schedMap) continue;
 
         const flickerCfg = mod.flicker;
-        if (flickerCfg && t >= (flickerCfg.from ?? 0) && t <= (flickerCfg.until ?? Infinity)) {
+        if (flickerCfg && resolveModulationEnvelope(t, flickerCfg) > 0) {
           const guitar = resolveStemAudio(samples, flickerCfg.source ?? "guitar");
           const flicker = ensureFlicker(layerId);
           const eraseCue = mod.eraseCue ? ensureEraseCue(layerId) : null;
           if (!eraseCue || !eraseCue.triggered) {
             updateFlicker(flicker, layerId, lh, schedMap, t, flickerCfg, guitar);
           }
-          for (const [unitId, end] of flicker.active) {
-            if (t < end) {
-              drawOverrides.set(unitKey(layerId, unitId), {
-                progress: 0,
-                phase: "draw",
-              });
-            }
+          for (const [unitId, flick] of flicker.active) {
+            if (t < flick.start || t >= flick.end) continue;
+
+            const sched = schedMap.get(unitId);
+            const base = sched
+              ? global.PlotterScheduler.unitStateAt(sched, t)
+              : { progress: 1, phase: "draw" };
+            const span = Math.max(0.001, flick.end - flick.start);
+            const fade = 1 - smoothstep((t - flick.start) / span);
+
+            drawOverrides.set(unitKey(layerId, unitId), {
+              progress: base.progress * fade,
+              phase: "draw",
+            });
           }
         }
 
@@ -519,9 +554,8 @@
 
         const speedCfg = mod.drawSpeed;
         if (speedCfg) {
-          const activeFrom = speedCfg.from ?? 0;
-          const activeUntil = speedCfg.until ?? Infinity;
-          if (t < activeFrom || t > activeUntil) continue;
+          const mix = resolveModulationEnvelope(t, speedCfg);
+          if (mix <= 0) continue;
 
           const longUnits = longUnitsByLayer.get(layerId);
           if (!longUnits || !longUnits.size) continue;
@@ -542,21 +576,21 @@
             const progress = updateDrawSpeed(state, sched, t, level, speedCfg);
             if (progress == null) continue;
 
+            const blended = lerp(base.progress, progress, mix);
+
             drawOverrides.set(unitKey(layerId, unit.id), {
-              progress,
-              phase: progress >= 1 ? "draw" : base.phase,
+              progress: blended,
+              phase: blended >= 1 ? "draw" : base.phase,
             });
           }
         }
 
         const breathCfg = mod.inkBreath;
         if (breathCfg) {
-          const activeFrom = breathCfg.from ?? 0;
-          const activeUntil = breathCfg.until ?? Infinity;
-          if (t >= activeFrom && t < activeUntil) {
+          const intensity = resolveInkBreathIntensity(t, breathCfg);
+          if (intensity > 0) {
             const stem = resolveStemAudio(samples, breathCfg.source ?? "drums");
             const audioLevel = resolveInkBreathLevel(stem, breathCfg);
-            const intensity = resolveInkBreathIntensity(t, breathCfg);
 
             for (const unit of lh.units) {
               const key = unitKey(layerId, unit.id);
@@ -608,19 +642,17 @@
           const trembleCfg = mod.tremble;
           if (!trembleCfg) continue;
 
-          const activeFrom = trembleCfg.from ?? mod.from ?? 0;
-          const activeUntil = trembleCfg.until ?? mod.until ?? Infinity;
-
+          const mix = resolveModulationEnvelope(t, trembleCfg);
           const stem = resolveStemAudio(samples, trembleCfg.source ?? "flute");
           const energy = trembleCfg.energy ?? 1;
-          const level = clamp01(resolveTrembleLevel(stem) * energy);
+          const level = clamp01(resolveTrembleLevel(stem) * energy * mix);
 
           for (const unit of lh.units) {
             const paths = unit.handle.paths || [];
             const sched = schedules.get(layerId)?.get(unit.id);
             const visible = unitInkVisible(sched, t);
 
-            if (!visible || t < activeFrom || t > activeUntil) {
+            if (!visible || mix <= 0 || level < 0.01) {
               for (const path of paths) path.style.transform = "";
               continue;
             }

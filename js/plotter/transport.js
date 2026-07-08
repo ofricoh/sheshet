@@ -134,12 +134,22 @@
     _setPlaying(on) {
       this.isPlaying = on;
       this._setSpinning(on);
+      this._updateToggleUi();
+    }
+
+    _updateToggleUi() {
+      if (!this.playButton || this.pauseButton) return;
+
+      const playing = this.isPlaying;
+
+      this.playButton.dataset.state = playing ? "playing" : "paused";
+      this.playButton.setAttribute("aria-label", playing ? "Pause" : "Play");
     }
 
     _wire() {
       const { audio, playButton, pauseButton, timeline } = this;
 
-      if (playButton && audio) {
+      if (playButton && audio && pauseButton) {
         playButton.addEventListener("click", () => {
           console.log("[plotter:play] click");
           this._syncAnalysisAudio();
@@ -168,14 +178,37 @@
             this.isPlaying
           );
         });
-      }
 
-      if (pauseButton && audio) {
         pauseButton.addEventListener("click", () => {
           audio.pause();
           this._pauseAnalysisAudios();
           this._setPlaying(false);
         });
+      } else if (playButton && audio) {
+        playButton.addEventListener("click", () => {
+          if (this.isPlaying) {
+            audio.pause();
+            this._pauseAnalysisAudios();
+            this._setPlaying(false);
+            return;
+          }
+
+          console.log("[plotter:play] click");
+          this._syncAnalysisAudio();
+          this._resumeAnalysers();
+          audio
+            .play()
+            .catch((err) => {
+              console.warn(
+                "[plotter:play] master audio.play() failed:",
+                err && err.message ? err.message : err
+              );
+            });
+          this._playAnalysisAudios();
+          this._setPlaying(true);
+        });
+
+        this._updateToggleUi();
       }
 
       if (audio) {

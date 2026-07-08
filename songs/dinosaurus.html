@@ -10,6 +10,35 @@
 
 <link rel="stylesheet" href="../css/style.css">
 <link rel="stylesheet" href="../css/songs/dinosaurus.css">
+<link rel="stylesheet" href="../css/songs/plotter-transport.css">
+<link rel="stylesheet" href="../css/songs/plotter-record.css">
+
+<script>
+  (function () {
+    const raw = sessionStorage.getItem("sheshet_track_transition");
+    if (!raw) return;
+
+    try {
+      const payload = JSON.parse(raw);
+      if (!payload?.direction) return;
+
+      document.documentElement.classList.add("track-transition-enter");
+      document.documentElement.dataset.trackEnter = payload.direction;
+
+      if (typeof payload.rollDeg === "number") {
+        const startAngle = -payload.rollDeg;
+        const normalized = ((startAngle % 360) + 360) % 360;
+        const style = document.createElement("style");
+        style.id = "track-transition-spin";
+        style.textContent =
+          "#plotterSpinGroup{transform:rotate(" +
+          normalized +
+          "deg)!important;animation-play-state:paused!important}";
+        document.head.appendChild(style);
+      }
+    } catch {}
+  })();
+</script>
 
 </head>
 
@@ -40,24 +69,20 @@
     </div>
   </div>
 
-  <!-- Minimal transport -->
-  <div class="plotter-controls">
-    <button id="playBtn" class="plotter-btn">Play</button>
-    <button id="pauseBtn" class="plotter-btn">Pause</button>
-  </div>
+  <a href="../index.html" class="plotter-home-btn" aria-label="Back to Home">→</a>
 
-  <div class="plotter-timeline-wrap">
-    <input
-      id="timeline"
-      class="plotter-timeline"
-      type="range"
-      min="0"
-      max="1000"
-      value="0"
-      step="1"
-      aria-label="timeline"
-    >
-  </div>
+  <nav class="plotter-transport" data-track-id="track-b3" aria-label="Playback">
+    <button type="button" id="nextBtn" class="plotter-transport-btn" aria-label="Next track">
+      <span class="plotter-transport-icon plotter-transport-icon--prev" aria-hidden="true"></span>
+    </button>
+    <button type="button" id="playBtn" class="plotter-transport-btn plotter-transport-btn--toggle" aria-label="Play" data-state="paused">
+      <span class="plotter-transport-icon plotter-transport-icon--play" aria-hidden="true"></span>
+      <span class="plotter-transport-icon plotter-transport-icon--pause" aria-hidden="true"></span>
+    </button>
+    <button type="button" id="prevBtn" class="plotter-transport-btn" aria-label="Previous track">
+      <span class="plotter-transport-icon plotter-transport-icon--next" aria-hidden="true"></span>
+    </button>
+  </nav>
 
   <audio
     id="dinosaurusAudio"
@@ -109,7 +134,6 @@
     muted
   ></audio>
 
-  <script src="../js/listened-tracks.js"></script>
   <script src="../js/main.js"></script>
   <script src="../js/plotter/scene.js"></script>
   <script src="../js/plotter/loader.js"></script>
@@ -120,6 +144,8 @@
   <script src="../js/plotter/scheduler.js"></script>
   <script src="../js/plotter/audio-analyser.js"></script>
   <script src="../js/plotter/modulation.js"></script>
+  <script src="../js/plotter/track-transition.js"></script>
+  <script src="../js/plotter/track-nav.js"></script>
   <script src="../js/plotter/transport.js"></script>
   <script src="../js/plotter/conductor.js"></script>
   <script src="../js/plotter/debug-timecode.js"></script>
